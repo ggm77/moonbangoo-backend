@@ -44,9 +44,9 @@ spring:
   application:
     name: moonbangoo
   datasource:
-    url: ${DB_URL:jdbc:mariadb://localhost:3306/moonbangoo}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
+    url: jdbc:mariadb://localhost:3306/moonbangoo
+    username: root
+    password: <DB 비밀번호>
     driver-class-name: org.mariadb.jdbc.Driver
   jpa:
     hibernate:
@@ -54,7 +54,7 @@ spring:
     open-in-view: false
 
 jwt:
-  secret: ${JWT_SECRET}          # Base64 인코딩된 64바이트 이상 키 (openssl rand -base64 64)
+  secret: <JWT 시크릿 키>   # Base64 인코딩된 64바이트 이상 키 (openssl rand -base64 64)
   access-token:
     expr-time: 3600              # 초
   refresh-token:
@@ -64,7 +64,7 @@ kakao:
   user-info-uri: https://kapi.kakao.com/v2/user/me
 
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  allowed-origins: http://localhost:5173,https://jeondowon.github.io
 
 springdoc:
   api-docs:
