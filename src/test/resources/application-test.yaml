@@ -1,0 +1,23 @@
+# 테스트 전용 설정 (H2 인메모리 DB)
+spring:
+  datasource:
+    url: jdbc:h2:mem:moonbangoo;MODE=MariaDB;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+jwt:
+  secret: HMBd6pNvVpnr9RYHuMuiTIy1bEaRE+zgPObg/Sd5vg94eX+vw2CV9shooOICRX+yqfxoFOXMi/WZ2CgyHb3JAA==
+  access-token:
+    expr-time: 3600
+  refresh-token:
+    expr-time: 1209600
+
+kakao:
+  user-info-uri: https://kapi.kakao.com/v2/user/me
+
+cors:
+  allowed-origins: http://localhost:5173
