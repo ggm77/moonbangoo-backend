@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 
 /**
  * 카드 뽑기 경품 엔티티
- * 사장님(ADMIN)이 등록하고 확률, 재고를 관리함
+ * 사장님이 등록하고 확률, 재고를 관리함
  */
 @Entity
 @Getter

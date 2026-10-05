@@ -1,9 +1,6 @@
 package com.seohamin.moonbangoo.domain.prize;
 
 import com.jayway.jsonpath.JsonPath;
-import com.seohamin.moonbangoo.domain.user.entity.User;
-import com.seohamin.moonbangoo.support.TestAuthHelper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,28 +27,15 @@ class PrizeAdminFlowTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private TestAuthHelper testAuthHelper;
-
-    private User admin;
-    private User user;
-
-    @BeforeEach
-    void setUp() {
-        admin = testAuthHelper.createAdmin("사장님");
-        user = testAuthHelper.createUser("손님");
-    }
-
-    private ResultActions createPrize(final User requester, final String body) throws Exception {
+    private ResultActions createPrize(final String body) throws Exception {
         return mockMvc.perform(post("/api/v1/admin/prize")
-                .header("Authorization", testAuthHelper.bearer(requester))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
     }
 
     //10% 할인권 등록
     private long createCoupon() throws Exception {
-        final String response = createPrize(admin, """
+        final String response = createPrize("""
                 {
                   "name":"10% 할인권","rarity":"R","category":"coupon",
                   "description":"매장 전 품목 10% 할인","condition":"2만원 이상 구매 시 사용",
@@ -71,7 +55,6 @@ class PrizeAdminFlowTest {
 
     private ResultActions patch(final String url, final String body) throws Exception {
         return mockMvc.perform(MockMvcRequestBuilders.patch(url)
-                .header("Authorization", testAuthHelper.bearer(admin))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
     }
@@ -112,11 +95,9 @@ class PrizeAdminFlowTest {
                 .andExpect(jsonPath("$.stock").value(nullValue()));
 
         //삭제 후 조회 불가
-        mockMvc.perform(delete("/api/v1/admin/prize/" + prizeId)
-                        .header("Authorization", testAuthHelper.bearer(admin)))
+        mockMvc.perform(delete("/api/v1/admin/prize/" + prizeId))
                 .andExpect(status().isNoContent());
-        mockMvc.perform(get("/api/v1/admin/prize/" + prizeId)
-                        .header("Authorization", testAuthHelper.bearer(admin)))
+        mockMvc.perform(get("/api/v1/admin/prize/" + prizeId))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("PRIZE_NOT_EXIST"));
     }
@@ -124,12 +105,11 @@ class PrizeAdminFlowTest {
     @Test
     void 경품_목록에_확률_합이_같이_나온다() throws Exception {
         createCoupon();
-        createPrize(admin, """
+        createPrize("""
                 {"name":"부스터팩 1팩","rarity":"UR","category":"pack","probability":0.05,"stock":10}
                 """).andExpect(status().isOk());
 
-        mockMvc.perform(get("/api/v1/admin/prizes")
-                        .header("Authorization", testAuthHelper.bearer(admin)))
+        mockMvc.perform(get("/api/v1/admin/prizes"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.prizes", hasSize(2)))
                 .andExpect(jsonPath("$.prizes[0].name").value("10% 할인권"))
@@ -138,52 +118,37 @@ class PrizeAdminFlowTest {
     }
 
     @Test
-    void 일반_유저는_경품을_관리할_수_없다() throws Exception {
-        createPrize(user, """
-                {"name":"10% 할인권","rarity":"R","category":"coupon","probability":0.25}
-                """).andExpect(status().isForbidden());
-
-        mockMvc.perform(get("/api/v1/admin/prizes")
-                        .header("Authorization", testAuthHelper.bearer(user)))
-                .andExpect(status().isForbidden());
-
-        //토큰 없으면 401
-        mockMvc.perform(get("/api/v1/admin/prizes"))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
     void 잘못된_값은_등록할_수_없다() throws Exception {
         //필수 값 누락
-        createPrize(admin, """
+        createPrize("""
                 {"rarity":"R","category":"coupon","probability":0.25}
                 """)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
 
         //확률은 0 ~ 1
-        createPrize(admin, """
+        createPrize("""
                 {"name":"할인권","rarity":"R","category":"coupon","probability":1.5}
                 """)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
 
         //확률은 소수점 6자리까지
-        createPrize(admin, """
+        createPrize("""
                 {"name":"할인권","rarity":"R","category":"coupon","probability":0.1234567}
                 """)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
 
         //재고는 음수 불가
-        createPrize(admin, """
+        createPrize("""
                 {"name":"할인권","rarity":"R","category":"coupon","probability":0.1,"stock":-1}
                 """)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
 
         //없는 등급
-        createPrize(admin, """
+        createPrize("""
                 {"name":"할인권","rarity":"SSR","category":"coupon","probability":0.1}
                 """)
                 .andExpect(status().isBadRequest())

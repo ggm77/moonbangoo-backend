@@ -4,9 +4,6 @@ import com.jayway.jsonpath.JsonPath;
 import com.seohamin.moonbangoo.domain.prize.entity.Prize;
 import com.seohamin.moonbangoo.domain.prize.entity.Rarity;
 import com.seohamin.moonbangoo.domain.prize.repository.PrizeRepository;
-import com.seohamin.moonbangoo.domain.user.entity.User;
-import com.seohamin.moonbangoo.support.TestAuthHelper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,17 +35,7 @@ class DrawFlowTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private TestAuthHelper testAuthHelper;
-
-    @Autowired
     private PrizeRepository prizeRepository;
-
-    private User user;
-
-    @BeforeEach
-    void setUp() {
-        user = testAuthHelper.createUser("손님");
-    }
 
     private Prize savePrize(final String name, final Rarity rarity, final String probability, final Integer stock) {
         return prizeRepository.save(Prize.builder()
@@ -63,8 +50,7 @@ class DrawFlowTest {
     }
 
     private ResultActions draw() throws Exception {
-        return mockMvc.perform(post("/api/v1/draw")
-                .header("Authorization", testAuthHelper.bearer(user)));
+        return mockMvc.perform(post("/api/v1/draw"));
     }
 
     @Test
@@ -126,11 +112,5 @@ class DrawFlowTest {
         draw()
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("NOT_ENOUGH_PRIZE"));
-    }
-
-    @Test
-    void 로그인하지_않으면_뽑을_수_없다() throws Exception {
-        mockMvc.perform(post("/api/v1/draw"))
-                .andExpect(status().isUnauthorized());
     }
 }

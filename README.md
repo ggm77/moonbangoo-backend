@@ -2,17 +2,16 @@
 
 어른문방구 카드팩 뽑기 이벤트([프론트엔드](https://github.com/jeondowon/moonbangoo))의 API 서버입니다.
 
-- 사장님(ADMIN)은 경품을 등록하고 경품별 확률과 재고를 수정할 수 있습니다.
-- 사용자는 카카오 로그인 후 카드 뽑기를 요청하면 서로 다른 경품 카드 5장을 받습니다.
+- 사장님은 경품을 등록하고 경품별 확률과 재고를 수정할 수 있습니다.
+- 손님은 카드 뽑기를 요청하면 서로 다른 경품 카드 5장을 받습니다.
 - 하루 1회 같은 참여 제한, 경품 선택·쿠폰 발급은 아직 구현하지 않았습니다.
 
 API 명세는 [docs/API.md](docs/API.md)를 참고하세요.
 
 ## 기술 스택
 
-- Java 25, Spring Boot 4.1 (Web MVC, Data JPA, Security, Validation)
+- Java 25, Spring Boot 4.1 (Web MVC, Data JPA, Validation)
 - MariaDB (테스트는 H2 인메모리)
-- JWT (JJWT), 카카오 OAuth
 - springdoc-openapi (Swagger UI: `/api/swagger`)
 
 ## 뽑기 규칙
@@ -25,15 +24,9 @@ API 명세는 [docs/API.md](docs/API.md)를 참고하세요.
 
 ※ 비복원 추출이므로 "5장 중에 해당 경품이 포함될 확률"은 설정한 확률과 다릅니다. 설정한 확률은 한 장을 뽑을 때 그 경품이 나올 비율입니다.
 
-## 사장님 계정 설정
+## 운영 방식
 
-카카오로 처음 로그인하면 `USER`로 가입됩니다. 사장님 계정은 한 번 로그인한 뒤 DB에서 권한을 바꿔주세요.
-
-```sql
-UPDATE users SET role = 'ADMIN' WHERE id = <사장님 유저 ID>;
-```
-
-권한을 바꾼 뒤 토큰 재발급(`POST /api/v1/auth/token/refresh`) 또는 재로그인하면 어드민 API를 사용할 수 있습니다.
+로그인과 인증은 없습니다. 서버는 사장님 개인 컴퓨터에서만 실행하고, 웹사이트는 가게 안에서만 이용하는 것을 전제로 합니다. 경품 관리 API(`/api/v1/admin/**`)도 인증 없이 호출할 수 있으므로 서버 포트를 외부에 공개하지 마세요.
 
 ## 설정
 
@@ -52,16 +45,6 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
-
-jwt:
-  secret: <JWT 시크릿 키>   # Base64 인코딩된 64바이트 이상 키 (openssl rand -base64 64)
-  access-token:
-    expr-time: 3600              # 초
-  refresh-token:
-    expr-time: 1209600           # 초
-
-kakao:
-  user-info-uri: https://kapi.kakao.com/v2/user/me
 
 cors:
   allowed-origins: http://localhost:5173,https://jeondowon.github.io

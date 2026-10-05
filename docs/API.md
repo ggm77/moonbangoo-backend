@@ -1,7 +1,7 @@
 # 어른문방구 API 명세서
 
 - 작성일: 2026-09-26
-- 범위: 인증, 사용자, 경품 관리(어드민), 카드 뽑기, 상태 확인 API
+- 범위: 경품 관리(어드민), 카드 뽑기, 상태 확인 API
 
 ## 1. 공통 규칙
 
@@ -19,16 +19,7 @@
 
 ### 인증
 
-인증이 필요한 API에는 서버에서 발급한 액세스 토큰을 넣는다.
-
-```http
-Authorization: Bearer <access-token>
-```
-
-- 카카오 액세스 토큰은 카카오 로그인 API의 요청 본문에만 사용한다.
-- 로그인, 토큰 재발급, `/ping`, `/ready`는 인증 없이 호출할 수 있다.
-- `/api/v1/admin/**`은 `ADMIN`(사장님)만, 그 외 API는 `USER` 또는 `ADMIN`이 사용할 수 있다.
-- 토큰이 없거나 잘못되었거나 만료되면 `401`, 권한이 없으면 `403`이다. 이 두 경우는 응답 본문 형식이 아래 에러 형식과 다르다.
+인증은 없다. 서버는 사장님 컴퓨터에서만 실행하고 가게 안에서만 접속하는 것을 전제로 하며, 모든 API를 인증 없이 호출할 수 있다.
 
 ### 에러 응답
 
@@ -44,12 +35,9 @@ Authorization: Bearer <access-token>
 | 코드 | HTTP | 설명 |
 | --- | --- | --- |
 | `INVALID_REQUEST` | 400 | 필수 값 누락, 길이·범위 위반 |
-| `INVALID_TOKEN` | 400 | 잘못된 토큰 (카카오 토큰, 리프레시 토큰) |
 | `INVALID_ENUM_VALUE` | 400 | 없는 등급 값 |
-| `USER_NOT_EXIST` | 400 | 유저 없음 |
 | `PRIZE_NOT_EXIST` | 400 | 경품 없음 |
 | `NOT_ENOUGH_PRIZE` | 409 | 뽑을 수 있는 경품이 5개 미만 |
-| `KAKAO_REQUEST_ERROR` | 500 | 카카오 통신 오류 |
 | `INTERNAL_SERVER_ERROR` | 500 | 서버 오류 |
 | `SERVICE_UNAVAILABLE` | 503 | DB 연결 실패 (`/ready`) |
 
@@ -64,71 +52,20 @@ Authorization: Bearer <access-token>
 
 ## 2. API 목록
 
-| 메서드 | 경로 | 기능 | 권한 | 성공 |
-| --- | --- | --- | --- | --- |
-| POST | `/api/v1/auth/oauth2/kakao` | 카카오 로그인 및 자동 가입 | 없음 | 200 |
-| POST | `/api/v1/auth/token/refresh` | 토큰 재발급 | 없음 | 200 |
-| GET | `/api/v1/user/me` | 내 정보 조회 | USER | 200 |
-| POST | `/api/v1/draw` | 카드 뽑기 (5장) | USER | 200 |
-| POST | `/api/v1/admin/prize` | 경품 등록 | ADMIN | 200 |
-| GET | `/api/v1/admin/prizes` | 경품 목록 + 확률 합 | ADMIN | 200 |
-| GET | `/api/v1/admin/prize/{id}` | 경품 조회 | ADMIN | 200 |
-| PATCH | `/api/v1/admin/prize/{id}` | 경품 정보 수정 | ADMIN | 200 |
-| PATCH | `/api/v1/admin/prize/{id}/probability` | 경품 확률 수정 | ADMIN | 200 |
-| PATCH | `/api/v1/admin/prize/{id}/stock` | 경품 재고 수정 | ADMIN | 200 |
-| DELETE | `/api/v1/admin/prize/{id}` | 경품 삭제 | ADMIN | 204 |
-| GET | `/ping` | 서버 상태 확인 | 없음 | 200 |
-| GET | `/ready` | DB 연결 상태 확인 | 없음 | 200 |
+| 메서드 | 경로 | 기능 | 성공 |
+| --- | --- | --- | --- |
+| POST | `/api/v1/draw` | 카드 뽑기 (5장) | 200 |
+| POST | `/api/v1/admin/prize` | 경품 등록 | 200 |
+| GET | `/api/v1/admin/prizes` | 경품 목록 + 확률 합 | 200 |
+| GET | `/api/v1/admin/prize/{id}` | 경품 조회 | 200 |
+| PATCH | `/api/v1/admin/prize/{id}` | 경품 정보 수정 | 200 |
+| PATCH | `/api/v1/admin/prize/{id}/probability` | 경품 확률 수정 | 200 |
+| PATCH | `/api/v1/admin/prize/{id}/stock` | 경품 재고 수정 | 200 |
+| DELETE | `/api/v1/admin/prize/{id}` | 경품 삭제 | 204 |
+| GET | `/ping` | 서버 상태 확인 | 200 |
+| GET | `/ready` | DB 연결 상태 확인 | 200 |
 
-## 3. 인증
-
-### POST /api/v1/auth/oauth2/kakao
-
-프론트엔드에서 카카오 로그인으로 받은 액세스 토큰을 서버 JWT로 교환한다. 처음 로그인하면 카카오 닉네임으로 자동 가입되며 `USER` 권한이 부여된다.
-
-```json
-{ "accessToken": "<kakao-access-token>" }
-```
-
-응답:
-
-```json
-{
-  "role": "USER",
-  "accessToken": "<access-token>",
-  "tokenType": "Bearer",
-  "exprTime": 3600,
-  "refreshToken": "<refresh-token>"
-}
-```
-
-`exprTime`은 액세스 토큰 유효 시간(초)이다.
-
-### POST /api/v1/auth/token/refresh
-
-```json
-{ "refreshToken": "<refresh-token>" }
-```
-
-응답은 카카오 로그인 응답에서 `role`을 뺀 형식이다. 재발급 시점의 유저 권한이 새 액세스 토큰에 반영된다. 액세스 토큰을 넣으면 `400 INVALID_TOKEN`.
-
-## 4. 사용자
-
-### GET /api/v1/user/me
-
-```json
-{
-  "id": 1,
-  "nickname": "홍길동",
-  "profileImage": "https://k.kakaocdn.net/p.jpg",
-  "role": "USER",
-  "createdAt": "2026-09-26T06:00:00Z"
-}
-```
-
-`profileImage`는 `null`일 수 있다.
-
-## 5. 카드 뽑기
+## 3. 카드 뽑기
 
 ### POST /api/v1/draw
 
@@ -156,7 +93,7 @@ Authorization: Bearer <access-token>
 
 에러: 뽑을 수 있는 경품이 5개 미만이면 `409 NOT_ENOUGH_PRIZE`.
 
-## 6. 경품 관리 (ADMIN)
+## 4. 경품 관리
 
 ### 경품 응답 형식
 
@@ -252,7 +189,7 @@ Authorization: Bearer <access-token>
 
 `204 No Content`.
 
-## 7. 상태 확인
+## 5. 상태 확인
 
 | 경로 | 성공 응답 |
 | --- | --- |

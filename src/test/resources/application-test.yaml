@@ -9,15 +9,6 @@ spring:
     hibernate:
       ddl-auto: create-drop
 
-jwt:
-  secret: HMBd6pNvVpnr9RYHuMuiTIy1bEaRE+zgPObg/Sd5vg94eX+vw2CV9shooOICRX+yqfxoFOXMi/WZ2CgyHb3JAA==
-  access-token:
-    expr-time: 3600
-  refresh-token:
-    expr-time: 1209600
-
-kakao:
-  user-info-uri: https://kapi.kakao.com/v2/user/me
 
 cors:
   allowed-origins: http://localhost:5173

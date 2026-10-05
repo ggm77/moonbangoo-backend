@@ -10,8 +10,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 사장님(ADMIN)이 경품을 관리하는 API
- * 권한 검사는 SecurityConfig의 /api/v1/admin/** 에서 함
+ * 사장님이 경품을 관리하는 API
+ * 인증 없음, 사장님 컴퓨터에서만 서버를 실행하고 가게 안에서만 접속하는 것을 전제로 함
  */
 @RestController
 @RequestMapping("/api/v1/admin")
