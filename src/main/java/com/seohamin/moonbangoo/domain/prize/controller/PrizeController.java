@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * 사장님이 경품을 관리하는 API
- * 인증 없음, 사장님 컴퓨터에서만 서버를 실행하고 가게 안에서만 접속하는 것을 전제로 함
+ * 인증 없음, 가게 내부망에서만 접속하는 것을 전제로 함
  */
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -28,10 +28,12 @@ public class PrizeController {
         return ResponseEntity.ok(prizeService.createPrize(prizeRequestDto));
     }
 
-    //경품 목록 조회 API (확률 합 포함)
+    //경품 목록 조회 API (packId를 주면 해당 팩의 경품만)
     @GetMapping("/prizes")
-    public ResponseEntity<PrizeListResponseDto> getPrizes(){
-        return ResponseEntity.ok(prizeService.getPrizes());
+    public ResponseEntity<PrizeListResponseDto> getPrizes(
+            @RequestParam(required = false) final Long packId
+    ){
+        return ResponseEntity.ok(prizeService.getPrizes(packId));
     }
 
     //경품 조회 API
@@ -42,7 +44,7 @@ public class PrizeController {
         return ResponseEntity.ok(prizeService.getPrize(id));
     }
 
-    //경품 정보 수정 API (이름, 등급, 카테고리, 이미지, 설명, 교환 조건)
+    //경품 정보 수정 API (팩, 이름, 등급, 설명, 교환 조건, 처음 수량)
     @PatchMapping("/prize/{id}")
     public ResponseEntity<PrizeResponseDto> updatePrize(
             @PathVariable final Long id,
@@ -51,22 +53,22 @@ public class PrizeController {
         return ResponseEntity.ok(prizeService.updatePrize(id, prizeRequestDto));
     }
 
-    //경품 확률 수정 API
-    @PatchMapping("/prize/{id}/probability")
-    public ResponseEntity<PrizeResponseDto> updateProbability(
+    //경품 남은 수량 수정 API
+    @PatchMapping("/prize/{id}/remaining")
+    public ResponseEntity<PrizeResponseDto> updateRemaining(
             @PathVariable final Long id,
-            @Validated @RequestBody final PrizeProbabilityRequestDto prizeProbabilityRequestDto
+            @Validated @RequestBody final PrizeRemainingRequestDto prizeRemainingRequestDto
     ){
-        return ResponseEntity.ok(prizeService.updateProbability(id, prizeProbabilityRequestDto));
+        return ResponseEntity.ok(prizeService.updateRemaining(id, prizeRemainingRequestDto));
     }
 
-    //경품 재고 수정 API
-    @PatchMapping("/prize/{id}/stock")
-    public ResponseEntity<PrizeResponseDto> updateStock(
+    //경품 남은 수량 증감 API
+    @PatchMapping("/prize/{id}/adjust")
+    public ResponseEntity<PrizeResponseDto> adjustRemaining(
             @PathVariable final Long id,
-            @Validated @RequestBody final PrizeStockRequestDto prizeStockRequestDto
+            @Validated @RequestBody final PrizeAdjustRequestDto prizeAdjustRequestDto
     ){
-        return ResponseEntity.ok(prizeService.updateStock(id, prizeStockRequestDto));
+        return ResponseEntity.ok(prizeService.adjustRemaining(id, prizeAdjustRequestDto));
     }
 
     //경품 삭제 API

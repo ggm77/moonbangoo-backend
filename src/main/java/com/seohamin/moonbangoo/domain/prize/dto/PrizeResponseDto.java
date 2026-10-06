@@ -4,7 +4,6 @@ import com.seohamin.moonbangoo.domain.prize.entity.Prize;
 import com.seohamin.moonbangoo.domain.prize.entity.Rarity;
 import lombok.Getter;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
@@ -13,27 +12,27 @@ import java.time.Instant;
 @Getter
 public class PrizeResponseDto {
     private final Long id;
+    private final Long packId;
+    private final String packName;
     private final String name;
     private final Rarity rarity;
-    private final String category;
-    private final String image;
     private final String description;
     private final String condition;
-    private final BigDecimal probability;
-    private final Integer stock;
+    private final int total;
+    private final int remaining;
     private final Instant createdAt;
     private final Instant updatedAt;
 
     public PrizeResponseDto(final Prize prize) {
         this.id = prize.getId();
+        this.packId = prize.getPack().getId();
+        this.packName = prize.getPack().getName();
         this.name = prize.getName();
         this.rarity = prize.getRarity();
-        this.category = prize.getCategory();
-        this.image = prize.getImage();
         this.description = prize.getDescription();
         this.condition = prize.getCondition();
-        this.probability = prize.getProbability();
-        this.stock = prize.getStock();
+        this.total = prize.getTotal();
+        this.remaining = prize.getRemaining();
         this.createdAt = prize.getCreatedAt();
         this.updatedAt = prize.getUpdatedAt();
     }

@@ -14,14 +14,11 @@ import java.util.List;
 import java.util.random.RandomGenerator;
 
 /**
- * 경품들의 확률에 따라 카드를 뽑는다.
- * 확률은 가중치로 사용하므로 경품들의 확률 합이 1이 아니어도 합 기준으로 비율대로 뽑힘
+ * 경품들의 남은 수량에 비례해서 카드를 뽑는다.
+ * 남은 경품 1개가 추첨권 1장이라고 보면 되고, 남은 수량이 많은 경품일수록 잘 뽑힘
  */
 @Component
 public class PrizeDrawer {
-
-    //확률은 소수점 6자리까지 저장되므로 정수 가중치로 바꿔서 오차 없이 계산
-    private static final int PROBABILITY_SCALE = 6;
 
     private final RandomGenerator random;
 
@@ -37,40 +34,40 @@ public class PrizeDrawer {
     }
 
     /**
-     * 확률에 따라 서로 다른 경품을 count개 뽑는 메서드
-     * 한 장 뽑을 때마다 뽑힌 경품을 빼고 남은 경품들의 확률 합 기준으로 다시 뽑음 (비복원 추출)
-     * 확률이 0인 경품은 뽑히지 않음
-     * @param candidates 뽑을 수 있는 경품 목록
+     * 남은 수량에 비례해서 count장을 뽑는 메서드
+     * 경품이 count종 이상이면 서로 다른 경품만 뽑음 (한 장 뽑을 때마다 뽑힌 경품을 빼고 다시 뽑는 비복원 추출)
+     * count종 미만이면 모든 종류를 한 장씩 넣고, 남은 자리는 남은 수량에 비례해서 중복으로 채움
+     * 손님은 한 장만 가져가고 한 장만 차감하므로 남은 수량보다 많이 보여줘도 됨
+     * @param candidates 뽑을 수 있는 경품 목록 (남은 수량이 0인 경품은 제외하고 사용)
      * @param count 뽑을 카드 수
      * @return 뽑힌 경품 (등급 오름차순, 레어 카드가 뒤쪽)
      */
     public List<Prize> draw(final List<Prize> candidates, final int count) {
 
-        // 1) 확률이 0보다 큰 경품만 후보로 사용
+        // 1) 남은 수량이 있는 경품만 후보로 사용
         final List<Prize> remaining = new ArrayList<>(candidates.stream()
-                .filter(prize -> toWeight(prize) > 0)
+                .filter(prize -> prize.getRemaining() > 0)
                 .toList());
 
-        // 2) 서로 다른 경품을 뽑아야 하므로 후보가 부족하면 뽑을 수 없음
-        if(remaining.size() < count){
-            throw new CustomException(ExceptionCode.NOT_ENOUGH_PRIZE);
+        // 2) 뽑을 경품이 없으면 팩이 품절
+        if(remaining.isEmpty()){
+            throw new CustomException(ExceptionCode.PACK_SOLD_OUT);
         }
 
-        // 3) 남은 후보들의 가중치 합 안에서 난수를 뽑아 해당 구간의 경품 선택
         final List<Prize> result = new ArrayList<>(count);
-        for(int i = 0; i < count; i++){
-            final long totalWeight = remaining.stream().mapToLong(PrizeDrawer::toWeight).sum();
-            long pick = random.nextLong(totalWeight);
 
-            final Iterator<Prize> iterator = remaining.iterator();
-            while(iterator.hasNext()){
-                final Prize prize = iterator.next();
-                pick -= toWeight(prize);
-                if(pick < 0){
-                    result.add(prize);
-                    iterator.remove();
-                    break;
-                }
+        if(remaining.size() >= count){
+            // 3-1) 서로 다른 경품 count개를 비복원 추출
+            for(int i = 0; i < count; i++){
+                final Prize picked = pick(remaining);
+                remaining.remove(picked);
+                result.add(picked);
+            }
+        } else {
+            // 3-2) 종류가 부족하면 모든 종류를 한 장씩 넣고 남은 자리는 중복을 허용해서 추출
+            result.addAll(remaining);
+            while(result.size() < count){
+                result.add(pick(remaining));
             }
         }
 
@@ -80,8 +77,22 @@ public class PrizeDrawer {
         return result;
     }
 
-    //확률을 정수 가중치로 변환 (ex. 0.05 -> 50000)
-    private static long toWeight(final Prize prize) {
-        return prize.getProbability().movePointRight(PROBABILITY_SCALE).longValue();
+    //남은 수량을 가중치로 경품 하나를 뽑음 (뽑힌 경품을 빼지는 않음)
+    private Prize pick(final List<Prize> prizes) {
+        final long totalWeight = prizes.stream().mapToLong(Prize::getRemaining).sum();
+        long pick = random.nextLong(totalWeight);
+
+        final Iterator<Prize> iterator = prizes.iterator();
+        Prize last = null;
+        while(iterator.hasNext()){
+            last = iterator.next();
+            pick -= last.getRemaining();
+            if(pick < 0){
+                return last;
+            }
+        }
+
+        //가중치 합 안에서 뽑았으므로 여기까지 오지 않음
+        return last;
     }
 }
