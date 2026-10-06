@@ -1,13 +1,20 @@
-# 테스트 전용 설정 (H2 인메모리 DB)
+# 테스트 전용 설정 (SQLite 인메모리 DB, src/main/resources/schema.sql로 테이블 생성)
 spring:
   datasource:
-    url: jdbc:h2:mem:moonbangoo;MODE=MariaDB;DB_CLOSE_DELAY=-1
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    url: "jdbc:sqlite::memory:"
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      # SQLite는 동시에 쓸 수 없으므로 연결을 하나만 사용해 요청을 순서대로 처리
+      # 인메모리 DB는 연결마다 따로 생기므로 하나를 계속 써야 테이블이 유지됨
+      maximum-pool-size: 1
+      connection-init-sql: PRAGMA foreign_keys = ON
   jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: none
+  sql:
+    init:
+      mode: always
 
 
 cors:

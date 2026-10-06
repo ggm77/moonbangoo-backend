@@ -39,10 +39,10 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-	testRuntimeOnly 'com.h2database:h2'
 
-	//DB
-	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+	//DB (SQLite는 Hibernate 기본 제공 dialect가 없어서 community dialect 필요)
+	runtimeOnly 'org.xerial:sqlite-jdbc:3.49.1.0'
+	implementation 'org.hibernate.orm:hibernate-community-dialects'
 
 	//lombok
 	compileOnly 'org.projectlombok:lombok'

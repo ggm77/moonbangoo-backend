@@ -12,7 +12,7 @@ API 명세는 [docs/API.md](docs/API.md)를 참고하세요.
 ## 기술 스택
 
 - Java 25, Spring Boot 4.1 (Web MVC, Data JPA, Validation)
-- MariaDB (테스트는 H2 인메모리)
+- SQLite (파일 DB, 테스트는 인메모리)
 - springdoc-openapi (Swagger UI: `/api/swagger`)
 
 ## 뽑기 규칙
@@ -39,14 +39,18 @@ spring:
   application:
     name: moonbangoo
   datasource:
-    url: jdbc:mariadb://localhost:3306/moonbangoo
-    username: root
-    password: <DB 비밀번호>
-    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:sqlite:./moonbangoo.db?foreign_keys=on&busy_timeout=5000&journal_mode=WAL
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      maximum-pool-size: 1
   jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     open-in-view: false
+  sql:
+    init:
+      mode: always
 
 cors:
   allowed-origins: http://localhost:5173,https://jeondowon.github.io
@@ -58,9 +62,16 @@ springdoc:
     path: /api/swagger
 ```
 
+## 데이터베이스
+
+- 데이터는 서버를 실행한 폴더의 `moonbangoo.db` 파일 하나에 저장됩니다(`-wal`, `-shm` 파일은 SQLite가 같이 만드는 임시 파일). 백업은 서버를 끈 뒤 이 파일을 복사하면 됩니다. DB 파일은 git에 올라가지 않습니다.
+- SQLite는 동시에 쓸 수 없어서 DB 연결을 1개만 쓰고(`maximum-pool-size: 1`) 요청을 순서대로 처리합니다. 가게 규모에서는 충분하고, 여러 손님이 동시에 같은 경품을 확정해도 남은 수량만큼만 성공합니다.
+- 테이블은 `src/main/resources/schema.sql`이 서버를 시작할 때 만듭니다(이미 있으면 건드리지 않음). Hibernate의 SQLite dialect가 자동 증가 id 컬럼을 올바르게 만들지 못해서 `ddl-auto`를 쓰지 않고 직접 관리합니다. **엔티티 컬럼을 바꾸면 `schema.sql`도 같이 고치고**, 이미 만들어진 DB 파일에는 `ALTER TABLE`을 직접 실행하거나 DB 파일을 지우고 다시 만들어야 합니다.
+- 이전에 MariaDB를 쓰던 데이터는 옮겨지지 않습니다.
+
 ## 실행 및 테스트
 
 ```bash
-./gradlew bootRun   # 서버 실행 (MariaDB 필요)
-./gradlew test      # 테스트 (H2 사용, src/test/resources/application-test.yaml)
+./gradlew bootRun   # 서버 실행 (DB 파일이 없으면 자동으로 만들어짐)
+./gradlew test      # 테스트 (SQLite 인메모리, src/test/resources/application-test.yaml)
 ```

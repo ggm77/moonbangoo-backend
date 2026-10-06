@@ -41,7 +41,7 @@ public class Prize extends BaseTimeEntity {
     private String description;
 
     //교환 조건 문구 (ex. 1만원 이상 구매 시 사용)
-    //condition은 MariaDB 예약어라 컬럼명 변경
+    //condition은 SQL 예약어라 컬럼명 변경
     @Column(name = "exchange_condition", length = 200, nullable = true)
     private String condition;
 

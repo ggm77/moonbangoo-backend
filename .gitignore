@@ -63,3 +63,8 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# SQLite DB 파일
+*.db
+*.db-shm
+*.db-wal
