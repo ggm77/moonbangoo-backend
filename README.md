@@ -42,35 +42,12 @@ API 명세는 [docs/API.md](docs/API.md)를 참고하세요.
 
 ## 설정
 
-`src/main/resources/application.yaml`은 git에 올리지 않습니다. 아래 형식으로 작성하세요.
+설정은 `src/main/resources/application.yaml`에 있고 git에 포함됩니다. 비밀번호나 API 키 같은 민감한 값은 이 파일에 넣지 말고 환경변수나 `application-dev.yaml`, `application-prod.yaml`(git에서 제외됨)로 분리하세요.
 
-```yaml
-spring:
-  application:
-    name: moonbangoo
-  datasource:
-    url: jdbc:sqlite:./moonbangoo.db?foreign_keys=on&busy_timeout=5000&journal_mode=WAL
-    driver-class-name: org.sqlite.JDBC
-    hikari:
-      maximum-pool-size: 1
-  jpa:
-    database-platform: org.hibernate.community.dialect.SQLiteDialect
-    hibernate:
-      ddl-auto: none
-    open-in-view: false
-  sql:
-    init:
-      mode: always
-
-cors:
-  allowed-origins: http://localhost:5173,https://jeondowon.github.io
-
-springdoc:
-  api-docs:
-    path: /api/v3/api-docs
-  swagger-ui:
-    path: /api/swagger
-```
+- `spring.datasource`: 서버를 실행한 폴더의 SQLite 파일 `moonbangoo.db`를 사용합니다.
+- `server.port`: 기본 8080입니다.
+- `cors.allowed-origins`: 허용할 프론트엔드 주소 목록(쉼표로 구분)입니다.
+- `springdoc`: API 문서 경로(`/api/v3/api-docs`)와 Swagger UI(`/api/swagger`)입니다.
 
 ## 데이터베이스
 

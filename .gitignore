@@ -14,7 +14,6 @@ application.yml
 application-dev.yml
 application-prod.yml
 
-application.yaml
 application-dev.yaml
 application-prod.yaml
 
