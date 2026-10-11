@@ -1,7 +1,7 @@
 # 어른문방구 API 명세서
 
 - 작성일: 2026-09-26
-- 최종 갱신: 2026-10-06
+- 최종 갱신: 2026-10-12
 - 범위: 팩·경품 관리(어드민), 카드 뽑기와 경품 확정, 당첨 기록, 상태 확인 API
 
 ## 1. 개념
@@ -114,8 +114,7 @@
 요청 본문 없음. 선택한 팩 안에서 남은 수량이 1 이상인 경품만 대상으로 카드 5장을 뽑는다. **수량은 차감하지 않는다.** 받은 카드는 서버에 기록되며 확정에서 사용한다.
 
 - 남은 수량에 비례해서 뽑는다. 남은 수량이 많은 경품일수록 잘 나온다.
-- 경품이 5종 이상이면 5장 모두 서로 다른 경품이다.
-- 경품이 5종 미만이면 모든 종류를 한 장씩 넣고 남은 자리를 중복으로 채운다. 같은 경품이 여러 장이면 `id`가 같다. 한 장만 가져가고 한 장만 차감하므로 남은 수량보다 많이 보여도 된다.
+- 5장은 한 장씩 따로 뽑는다(복원 추출). 같은 경품이 여러 장 나올 수 있고, 그 경우 `id`가 같다. 한 장만 가져가고 한 장만 차감하므로 남은 수량보다 많이 보여도 된다.
 - 결과는 등급 오름차순(C → UR)이며 이 순서대로 카드를 넘기면 된다.
 
 응답:
@@ -130,6 +129,7 @@
       "rarity": "C",
       "description": "매장 전 품목 5% 할인\n다른 할인과 중복 적용 불가",
       "condition": "1만원 이상 구매 시 사용",
+      "icon": "discount",
       "packId": 3,
       "packName": "할인권",
       "packImage": null,
@@ -139,7 +139,7 @@
 }
 ```
 
-`cards`는 항상 5개다(위 예시는 1개만 표시). `description`, `condition`, `packImage`, `packIcon`은 `null`일 수 있다. 수량은 응답에 포함하지 않는다.
+`cards`는 항상 5개다(위 예시는 1개만 표시). `icon`은 경품 종류 아이콘 키다. 한 팩에 여러 종류의 경품을 섞어 넣어도 카드마다 종류를 표시할 수 있다. `description`, `condition`, `icon`, `packImage`, `packIcon`은 `null`일 수 있다. 수량은 응답에 포함하지 않는다.
 
 에러: `PACK_NOT_EXIST`(400), `PACK_INACTIVE`(409), 남은 경품이 없으면 `PACK_SOLD_OUT`(409).
 
@@ -238,6 +238,7 @@
   "rarity": "R",
   "description": "매장 전 품목 10% 할인",
   "condition": "2만원 이상 구매 시 사용",
+  "icon": "discount",
   "total": 10,
   "remaining": 10,
   "createdAt": "2026-10-06T06:00:00Z",
@@ -256,6 +257,7 @@
 | `rarity` | string | 예 | `C`, `R`, `SR`, `UR` |
 | `description` | string | 아니오 | 최대 500자 |
 | `condition` | string | 아니오 | 교환 조건 문구, 최대 200자 |
+| `icon` | string | 아니오 | 경품 종류 아이콘 키, 최대 30자 (예: `bakery`, `drink`, `discount`) |
 | `total` | integer | 예 | 0 이상. 남은 수량도 같은 값으로 시작한다. |
 
 ```json
@@ -265,6 +267,7 @@
   "rarity": "UR",
   "description": "인기 카드 부스터팩 1팩",
   "condition": "현장 즉시 증정",
+  "icon": "booster",
   "total": 10
 }
 ```
@@ -283,10 +286,10 @@
 
 ### PATCH /api/v1/admin/prize/{id}
 
-`packId`, `name`, `rarity`, `description`, `condition`, `total` 중 바꿀 값만 보낸다. 조건은 등록과 같다.
+`packId`, `name`, `rarity`, `description`, `condition`, `icon`, `total` 중 바꿀 값만 보낸다. 조건은 등록과 같다.
 
 - 보내지 않은 필드와 `null`은 변경하지 않는다.
-- `description`, `condition`에 빈 문자열(`""`)을 보내면 값이 지워진다.
+- `description`, `condition`, `icon`에 빈 문자열(`""`)을 보내면 값이 지워진다.
 - `packId`를 보내면 경품이 다른 팩으로 이동한다. 수량은 그대로 가져간다.
 - `total`은 현재 `remaining`보다 작게 바꿀 수 없다(`INVALID_REQUEST`).
 

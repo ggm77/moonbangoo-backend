@@ -16,6 +16,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -54,11 +56,19 @@ class DrawAdminFlowTest {
     }
 
     //손님이 뽑기를 하고 경품을 확정함, 뽑기 아이디 반환
+    //카드는 장마다 따로 뽑으므로 확정할 경품이 나올 때까지 다시 뽑음 (확정하지 않은 뽑기는 기록에 남지 않음)
     private long drawAndConfirm(final Prize prize) throws Exception {
-        final String response = mockMvc.perform(post("/api/v1/packs/" + pack.getId() + "/draw"))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        final Number drawId = JsonPath.read(response, "$.drawId");
+        Number drawId = null;
+        for(int i = 0; i < 200 && drawId == null; i++){
+            final String response = mockMvc.perform(post("/api/v1/packs/" + pack.getId() + "/draw"))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            final List<Number> ids = JsonPath.read(response, "$.cards[*].id");
+            if(ids.stream().anyMatch(id -> id.longValue() == prize.getId())){
+                drawId = JsonPath.read(response, "$.drawId");
+            }
+        }
+        assertThat(drawId).as(prize.getName() + " 카드가 나오지 않음").isNotNull();
 
         mockMvc.perform(post("/api/v1/draws/" + drawId + "/confirm")
                         .contentType(MediaType.APPLICATION_JSON)

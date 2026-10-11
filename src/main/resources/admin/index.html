@@ -851,12 +851,17 @@ function openPrizeForm({ prize = null, packId = null, keepRarity = null } = {}) 
   const remainingInput = prize ? numInput('f-remaining', prize.remaining) : null;
   const descInput = h('textarea', { class: 'input', id: 'f-desc', maxlength: '500', value: prize?.description ?? '', placeholder: '카드에 보여 줄 설명' });
   const condInput = h('input', { class: 'input', id: 'f-cond', type: 'text', maxlength: '200', value: prize?.condition ?? '', placeholder: '예: 1만원 이상 구매 시 사용' });
+  // 카드에 표시할 경품 종류 (한 팩에 여러 종류를 섞어 넣어도 카드마다 종류가 나옴)
+  const iconSelect = h('select', { class: 'input', id: 'f-icon', value: prize?.icon ?? '' },
+    h('option', { value: '', text: '선택 안 함' }),
+    DEFAULT_PACKS.map(p => h('option', { value: p.icon, text: p.name })));
 
   const body = h('form', { id: 'prize-form', novalidate: true, onsubmit: e => { e.preventDefault(); save(false); } },
     error,
     h('div', { class: 'field' }, h('label', { for: 'f-pack', text: '어느 팩에 넣을까요?' }), packSelect),
     h('div', { class: 'field' }, h('label', { for: 'f-name', text: '경품 이름' }), nameInput),
     h('div', { class: 'field' }, h('span', { class: 'label', text: '등급' }), rarityPick),
+    h('div', { class: 'field' }, h('label', { for: 'f-icon' }, '종류', h('span', { class: 'opt', text: '(선택)' })), iconSelect),
     editing
       ? h('div', { class: 'row2' },
           numField(remainingInput, '남은 수량', '지금 남아 있는 개수예요.'),
@@ -888,13 +893,14 @@ function openPrizeForm({ prize = null, packId = null, keepRarity = null } = {}) 
       if (editing) {
         // 남은 수량을 먼저 바꿔야 "처음 수량 ≥ 남은 수량" 검사를 통과함
         if (remaining !== prize.remaining) await api('PATCH', `/prize/${prize.id}/remaining`, { remaining });
-        await api('PATCH', `/prize/${prize.id}`, { packId: targetPack, name, rarity, total, description: descInput.value.trim(), condition: condInput.value.trim() });
+        await api('PATCH', `/prize/${prize.id}`, { packId: targetPack, name, rarity, total, description: descInput.value.trim(), condition: condInput.value.trim(), icon: iconSelect.value });
         toast(`'${name}' 경품을 저장했어요.`, 'ok');
       } else {
         await api('POST', '/prize', {
           packId: targetPack, name, rarity, total,
           ...(descInput.value.trim() && { description: descInput.value.trim() }),
           ...(condInput.value.trim() && { condition: condInput.value.trim() }),
+          ...(iconSelect.value && { icon: iconSelect.value }),
         });
         state.lastPackId = targetPack;
         state.lastRarity = rarity;

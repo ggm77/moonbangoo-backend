@@ -45,6 +45,10 @@ public class Prize extends BaseTimeEntity {
     @Column(name = "exchange_condition", length = 200, nullable = true)
     private String condition;
 
+    //경품 종류 아이콘 키 (ex. bakery), 한 팩에 여러 종류가 섞여 있어도 카드마다 종류를 표시하기 위함
+    @Column(length = 30, nullable = true)
+    private String icon;
+
     //처음 등록한 수량
     @Column(nullable = false)
     private int total;
@@ -60,6 +64,7 @@ public class Prize extends BaseTimeEntity {
             final Rarity rarity,
             final String description,
             final String condition,
+            final String icon,
             final int total
     ){
         this.pack = pack;
@@ -67,6 +72,7 @@ public class Prize extends BaseTimeEntity {
         this.rarity = rarity;
         this.description = description;
         this.condition = condition;
+        this.icon = icon;
         this.total = total;
         this.remaining = total;
     }
@@ -94,6 +100,11 @@ public class Prize extends BaseTimeEntity {
     //교환 조건 변경
     public void updateCondition(final String condition){
         this.condition = condition;
+    }
+
+    //종류 아이콘 변경
+    public void updateIcon(final String icon){
+        this.icon = icon;
     }
 
     //처음 수량 변경 (남은 수량보다 작게 바꿀 수 없음, 서비스에서 검증)

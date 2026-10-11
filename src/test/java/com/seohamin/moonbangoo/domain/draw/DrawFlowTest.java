@@ -54,6 +54,7 @@ class DrawFlowTest {
                 .rarity(rarity)
                 .description(name + " 설명")
                 .condition("현장 즉시 증정")
+                .icon("bakery")
                 .total(total)
                 .build());
     }
@@ -102,7 +103,7 @@ class DrawFlowTest {
     }
 
     @Test
-    void 선택한_팩_안에서만_서로_다른_카드_5장을_등급_오름차순으로_뽑는다() throws Exception {
+    void 선택한_팩_안에서만_카드_5장을_등급_오름차순으로_뽑는다() throws Exception {
         final Pack pack = saveFullPack("베이커리");
         final Pack other = saveFullPack("음료");
         final Prize soldOut = savePrize(pack, "품절", Rarity.UR, 0);
@@ -118,6 +119,7 @@ class DrawFlowTest {
                     .andExpect(jsonPath("$.cards", hasSize(5)))
                     .andExpect(jsonPath("$.cards[0].packId").value(pack.getId()))
                     .andExpect(jsonPath("$.cards[0].packName").value("베이커리"))
+                    .andExpect(jsonPath("$.cards[0].icon").value("bakery"))
                     .andReturn().getResponse().getContentAsString();
 
             final List<Number> ids = JsonPath.read(response, "$.cards[*].id");
@@ -126,7 +128,6 @@ class DrawFlowTest {
             final Set<Long> uniqueIds = new HashSet<>();
             ids.forEach(id -> uniqueIds.add(id.longValue()));
 
-            assertThat(uniqueIds).hasSize(5);
             assertThat(packPrizeIds).containsAll(uniqueIds);
             assertThat(rarities).isSortedAccordingTo(Comparator.comparing(Rarity::valueOf));
         }
@@ -151,10 +152,9 @@ class DrawFlowTest {
     }
 
     @Test
-    void 경품이_5종_미만이면_같은_경품이_중복으로_나온다() throws Exception {
+    void 남은_수량이_1개여도_같은_경품이_여러_장_나온다() throws Exception {
         final Pack pack = savePack("카드", true);
         final Prize a = savePrize(pack, "A", Rarity.C, 1);
-        final Prize b = savePrize(pack, "B", Rarity.UR, 1);
 
         final String response = draw(pack.getId())
                 .andExpect(status().isOk())
@@ -165,7 +165,7 @@ class DrawFlowTest {
         final Set<Long> uniqueIds = new HashSet<>();
         ids.forEach(id -> uniqueIds.add(id.longValue()));
 
-        assertThat(uniqueIds).containsExactlyInAnyOrder(a.getId(), b.getId());
+        assertThat(uniqueIds).containsExactly(a.getId());
     }
 
     @Test

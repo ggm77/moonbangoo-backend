@@ -35,8 +35,7 @@ public class PrizeDrawer {
 
     /**
      * 남은 수량에 비례해서 count장을 뽑는 메서드
-     * 경품이 count종 이상이면 서로 다른 경품만 뽑음 (한 장 뽑을 때마다 뽑힌 경품을 빼고 다시 뽑는 비복원 추출)
-     * count종 미만이면 모든 종류를 한 장씩 넣고, 남은 자리는 남은 수량에 비례해서 중복으로 채움
+     * 한 장씩 따로 뽑으므로(복원 추출) 같은 경품이 여러 장 나올 수 있음
      * 손님은 한 장만 가져가고 한 장만 차감하므로 남은 수량보다 많이 보여줘도 됨
      * @param candidates 뽑을 수 있는 경품 목록 (남은 수량이 0인 경품은 제외하고 사용)
      * @param count 뽑을 카드 수
@@ -45,9 +44,9 @@ public class PrizeDrawer {
     public List<Prize> draw(final List<Prize> candidates, final int count) {
 
         // 1) 남은 수량이 있는 경품만 후보로 사용
-        final List<Prize> remaining = new ArrayList<>(candidates.stream()
+        final List<Prize> remaining = candidates.stream()
                 .filter(prize -> prize.getRemaining() > 0)
-                .toList());
+                .toList();
 
         // 2) 뽑을 경품이 없으면 팩이 품절
         if(remaining.isEmpty()){
@@ -56,19 +55,9 @@ public class PrizeDrawer {
 
         final List<Prize> result = new ArrayList<>(count);
 
-        if(remaining.size() >= count){
-            // 3-1) 서로 다른 경품 count개를 비복원 추출
-            for(int i = 0; i < count; i++){
-                final Prize picked = pick(remaining);
-                remaining.remove(picked);
-                result.add(picked);
-            }
-        } else {
-            // 3-2) 종류가 부족하면 모든 종류를 한 장씩 넣고 남은 자리는 중복을 허용해서 추출
-            result.addAll(remaining);
-            while(result.size() < count){
-                result.add(pick(remaining));
-            }
+        // 3) 한 장씩 남은 수량에 비례해서 추출 (뽑힌 경품도 빼지 않음)
+        for(int i = 0; i < count; i++){
+            result.add(pick(remaining));
         }
 
         // 4) 카드 넘기는 순서대로 등급 오름차순 정렬

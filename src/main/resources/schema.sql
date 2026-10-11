@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS prize (
     rarity             VARCHAR(10) NOT NULL CHECK (rarity IN ('C', 'R', 'SR', 'UR')),
     description        VARCHAR(500),
     exchange_condition VARCHAR(200),
+    icon               VARCHAR(30),
     total              INTEGER     NOT NULL CHECK (total >= 0),
     remaining          INTEGER     NOT NULL CHECK (remaining >= 0),
     created_at         TIMESTAMP   NOT NULL,
