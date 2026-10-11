@@ -8,7 +8,7 @@ import lombok.Getter;
 /**
  * 경품 등록(Create), 수정(Update) 요청 DTO
  * 수정은 변경할 값만 보내면 됨
- * 수정시 description, condition에 빈 문자열을 보내면 값이 지워짐
+ * 수정시 description, condition, icon에 빈 문자열을 보내면 값이 지워짐
  * 남은 수량은 수정 API가 따로 있음
  */
 @Getter
@@ -31,6 +31,10 @@ public class PrizeRequestDto {
 
     @Size(max = 200, groups = {Create.class, Update.class})
     private String condition;
+
+    //경품 종류 아이콘 키 (ex. bakery)
+    @Size(max = 30, groups = {Create.class, Update.class})
+    private String icon;
 
     //처음 수량, 등록시 남은 수량도 같은 값으로 시작
     @NotNull(groups = Create.class)

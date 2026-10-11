@@ -84,38 +84,44 @@ class PrizeDrawerTest {
     }
 
     @Test
-    void 경품이_5종_이상이면_서로_다른_경품이_등급_오름차순으로_뽑힌다() {
+    void 장마다_따로_뽑아서_같은_경품이_여러_장_나올_수_있고_등급_오름차순으로_정렬된다() {
+        final Prize soldOut = prize("품절", Rarity.UR, 0);
         final List<Prize> candidates = List.of(
                 prize("A", Rarity.UR, 1),
                 prize("B", Rarity.SR, 2),
                 prize("C", Rarity.R, 3),
                 prize("D", Rarity.C, 10),
                 prize("E", Rarity.R, 5),
-                prize("F", Rarity.C, 7)
+                prize("F", Rarity.C, 7),
+                soldOut
         );
 
+        boolean duplicated = false;
         for(int i = 0; i < 1000; i++){
             final List<Prize> result = prizeDrawer.draw(candidates, 5);
 
-            assertThat(result).hasSize(5).doesNotHaveDuplicates();
+            assertThat(result).hasSize(5).doesNotContain(soldOut);
             assertThat(result).isSortedAccordingTo(Comparator.comparing(Prize::getRarity));
+            duplicated |= result.stream().distinct().count() < 5;
         }
+
+        assertThat(duplicated).isTrue();
     }
 
     @Test
-    void 경품이_5종_미만이면_모든_종류를_넣고_중복으로_채운다() {
-        final Prize a = prize("A", Rarity.C, 1);
-        final Prize b = prize("B", Rarity.R, 1);
-        final Prize c = prize("C", Rarity.SR, 8);
-        final Prize soldOut = prize("품절", Rarity.UR, 0);
+    void 종류가_적어도_모든_종류를_억지로_넣지_않는다() {
+        final Prize rare = prize("드문 경품", Rarity.UR, 1);
+        final Prize common = prize("흔한 경품", Rarity.C, 99);
 
-        for(int i = 0; i < 1000; i++){
-            final List<Prize> result = prizeDrawer.draw(List.of(a, b, c, soldOut), 5);
-
-            assertThat(result).hasSize(5);
-            assertThat(result).contains(a, b, c).doesNotContain(soldOut);
-            assertThat(result).isSortedAccordingTo(Comparator.comparing(Prize::getRarity));
+        //5장 중 드문 경품이 한 장이라도 나올 확률은 1 - 0.99^5 ≈ 4.9%
+        int withRare = 0;
+        for(int i = 0; i < TRIALS / 10; i++){
+            if(prizeDrawer.draw(List.of(rare, common), 5).contains(rare)){
+                withRare++;
+            }
         }
+
+        assertThat(withRare / (double) (TRIALS / 10)).isCloseTo(1 - Math.pow(0.99, 5), within(0.01));
     }
 
     @Test

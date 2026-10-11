@@ -37,6 +37,7 @@ public class PrizeService {
                 .rarity(toRarity(prizeRequestDto.getRarity()))
                 .description(blankToNull(prizeRequestDto.getDescription()))
                 .condition(blankToNull(prizeRequestDto.getCondition()))
+                .icon(blankToNull(prizeRequestDto.getIcon()))
                 .total(prizeRequestDto.getTotal())
                 .build());
 
@@ -101,6 +102,10 @@ public class PrizeService {
 
         if(prizeRequestDto.getCondition() != null){
             prize.updateCondition(blankToNull(prizeRequestDto.getCondition()));
+        }
+
+        if(prizeRequestDto.getIcon() != null){
+            prize.updateIcon(blankToNull(prizeRequestDto.getIcon()));
         }
 
         //처음 수량은 남은 수량보다 작게 바꿀 수 없음

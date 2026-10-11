@@ -18,6 +18,7 @@ public class PrizeResponseDto {
     private final Rarity rarity;
     private final String description;
     private final String condition;
+    private final String icon;
     private final int total;
     private final int remaining;
     private final Instant createdAt;
@@ -31,6 +32,7 @@ public class PrizeResponseDto {
         this.rarity = prize.getRarity();
         this.description = prize.getDescription();
         this.condition = prize.getCondition();
+        this.icon = prize.getIcon();
         this.total = prize.getTotal();
         this.remaining = prize.getRemaining();
         this.createdAt = prize.getCreatedAt();

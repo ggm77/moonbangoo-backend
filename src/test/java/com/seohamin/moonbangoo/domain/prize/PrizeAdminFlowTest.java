@@ -54,7 +54,7 @@ class PrizeAdminFlowTest {
                 {
                   "packId":%d,"name":"10%% 할인권","rarity":"R",
                   "description":"매장 전 품목 10%% 할인","condition":"2만원 이상 구매 시 사용",
-                  "total":10
+                  "icon":"discount","total":10
                 }
                 """.formatted(pack.getId()))
                 .andExpect(status().isOk())
@@ -63,6 +63,7 @@ class PrizeAdminFlowTest {
                 .andExpect(jsonPath("$.name").value("10% 할인권"))
                 .andExpect(jsonPath("$.rarity").value("R"))
                 .andExpect(jsonPath("$.condition").value("2만원 이상 구매 시 사용"))
+                .andExpect(jsonPath("$.icon").value("discount"))
                 .andExpect(jsonPath("$.total").value(10))
                 .andExpect(jsonPath("$.remaining").value(10))
                 .andReturn().getResponse().getContentAsString();
@@ -77,13 +78,14 @@ class PrizeAdminFlowTest {
 
         //보낸 값만 수정되고 빈 문자열은 지워짐
         patch("/api/v1/admin/prize/" + prizeId, """
-                {"name":"15% 할인권","rarity":"SR","description":""}
+                {"name":"15% 할인권","rarity":"SR","description":"","icon":""}
                 """)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("15% 할인권"))
                 .andExpect(jsonPath("$.rarity").value("SR"))
                 .andExpect(jsonPath("$.packId").value(pack.getId()))
                 .andExpect(jsonPath("$.description").value(nullValue()))
+                .andExpect(jsonPath("$.icon").value(nullValue()))
                 .andExpect(jsonPath("$.condition").value("2만원 이상 구매 시 사용"))
                 .andExpect(jsonPath("$.total").value(10));
 

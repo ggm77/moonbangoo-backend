@@ -17,6 +17,7 @@ public class DrawCardResponseDto {
     private final Rarity rarity;
     private final String description;
     private final String condition;
+    private final String icon;
     private final Long packId;
     private final String packName;
     private final String packImage;
@@ -30,6 +31,7 @@ public class DrawCardResponseDto {
         this.rarity = prize.getRarity();
         this.description = prize.getDescription();
         this.condition = prize.getCondition();
+        this.icon = prize.getIcon();
         this.packId = pack.getId();
         this.packName = pack.getName();
         this.packImage = pack.getImage();
