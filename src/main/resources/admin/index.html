@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>어른문방구 관리자</title>
+<style>
+:root {
+  --bg: #f5f3ee;
+  --card: #ffffff;
+  --ink: #1f2328;
+  --sub: #5b6470;
+  --line: #e2ddd1;
+  --brand: #7a4b0c;
+  --brand-dark: #5f3a08;
+  --brand-soft: #f3e8d3;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --ok: #05603a;
+  --ok-soft: #e3f4ea;
+  --warn: #93370d;
+  --warn-soft: #fef0c7;
+  --focus: #1d4ed8;
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 17px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+}
+body.modal-open { overflow: hidden; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+/* 상단 */
+.top { position: sticky; top: 0; z-index: 20; background: var(--card); border-bottom: 1px solid var(--line); }
+.top-inner { max-width: 960px; margin: 0 auto; padding: 10px 16px 6px; display: flex; align-items: center; gap: 12px; }
+.top h1 { margin: 0; font-size: 19px; line-height: 1.2; flex: 1; }
+.top h1 span { color: var(--brand); }
+.status { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--sub); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ok); flex: none; }
+.offline .dot { background: var(--danger); }
+.offline { color: var(--danger); font-weight: 700; }
+.tabs { max-width: 960px; margin: 0 auto; padding: 0 8px; display: flex; gap: 4px; }
+.tab {
+  flex: 1; min-height: 48px; border: 0; background: none; font-weight: 700; color: var(--sub);
+  border-bottom: 4px solid transparent; padding: 6px 8px;
+}
+.tab[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); }
+.tab .count { margin-left: 4px; font-size: 13px; background: var(--warn-soft); color: var(--warn); border-radius: 99px; padding: 0 8px; }
+
+main { max-width: 960px; margin: 0 auto; padding: 16px 16px 120px; }
+
+/* 버튼 */
+.btn {
+  min-height: 46px; padding: 8px 18px; border-radius: 12px; border: 1.5px solid var(--line);
+  background: var(--card); font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn:hover { background: #faf8f3; }
+.btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn-primary:hover { background: var(--brand-dark); }
+.btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn-danger:hover { background: #8f1c12; }
+.btn-ghost-danger { color: var(--danger); border-color: #f0c0bb; }
+.btn-ghost-danger:hover { background: var(--danger-soft); }
+.btn-small { min-height: 40px; padding: 4px 14px; font-size: 15px; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.icon-btn { width: 44px; height: 44px; border-radius: 50%; border: 0; background: none; font-size: 20px; color: var(--sub); }
+.icon-btn:hover { background: #efece4; }
+
+/* 카드 공통 */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+.stack > * + * { margin-top: 14px; }
+.muted { color: var(--sub); }
+.small { font-size: 14px; }
+
+/* 안내 배너 */
+.banner { border-radius: var(--radius); padding: 12px 16px; font-weight: 600; display: flex; gap: 10px; align-items: flex-start; }
+.banner-warn { background: var(--warn-soft); color: var(--warn); }
+.banner-error { background: var(--danger-soft); color: var(--danger); }
+.banner .btn { margin-left: auto; flex: none; }
+
+/* 요약 */
+.summary { padding: 16px; }
+.summary-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.summary-num { font-size: 32px; font-weight: 800; line-height: 1.1; }
+.summary-num small { font-size: 18px; font-weight: 600; color: var(--sub); }
+.bar { height: 10px; border-radius: 99px; background: #ece8dd; overflow: hidden; margin-top: 10px; }
+.bar > i { display: block; height: 100%; background: var(--brand); border-radius: 99px; transition: width .25s; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.chip { border-radius: 99px; padding: 4px 12px; font-size: 14px; font-weight: 600; background: #f1eee6; display: inline-flex; gap: 6px; align-items: center; }
+
+/* 등급 색 (색만으로 구분하지 않도록 항상 글자도 함께 표시) */
+.rarity { display: inline-block; border-radius: 8px; padding: 1px 9px; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.r-c  { background: #e8eaee; color: #3c4452; }
+.r-r  { background: #dbeafe; color: #1e40af; }
+.r-sr { background: #ede4fd; color: #5b21b6; }
+.r-ur { background: #fde7b0; color: #7a4a00; }
+
+/* 도구줄 */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.toolbar .grow { flex: 1; }
+.seg { display: inline-flex; border: 1.5px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--card); }
+.seg button { min-height: 44px; border: 0; background: none; padding: 4px 14px; font-weight: 700; color: var(--sub); border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--brand-soft); color: var(--brand); }
+
+/* 팩 */
+.pack { overflow: hidden; }
+.pack.hidden-pack { background: #fbfaf6; }
+.pack.hidden-pack .pack-title { color: var(--sub); }
+.pack-head { display: flex; gap: 12px; align-items: center; padding: 12px 14px; flex-wrap: wrap; }
+.pack-toggle { display: flex; gap: 12px; align-items: center; flex: 1; min-width: 200px; border: 0; background: none; text-align: left; padding: 0; min-height: 52px; }
+.thumb { width: 52px; height: 52px; border-radius: 12px; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; font-weight: 800; font-size: 22px; flex: none; overflow: hidden; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.pack-title { font-weight: 800; font-size: 18px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pack-meta { font-size: 14px; color: var(--sub); }
+.chev { margin-left: auto; color: var(--sub); transition: transform .15s; font-size: 14px; }
+.pack-toggle[aria-expanded="false"] .chev { transform: rotate(-90deg); }
+.pack-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.badge { border-radius: 8px; padding: 1px 9px; font-size: 13px; font-weight: 800; }
+.badge-out { background: var(--danger-soft); color: var(--danger); }
+.badge-low { background: var(--warn-soft); color: var(--warn); }
+.badge-hide { background: #eceae3; color: var(--sub); }
+
+/* 스위치 */
+.switch { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 14px; font-weight: 700; color: var(--sub); cursor: pointer; user-select: none; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch .track { width: 48px; height: 28px; border-radius: 99px; background: #c9c4b6; position: relative; transition: background .15s; flex: none; }
+.switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.switch input:checked + .track { background: var(--ok); }
+.switch input:checked + .track::after { transform: translateX(20px); }
+.switch input:focus-visible + .track { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* 경품 줄 */
+.prizes { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.prize { padding: 10px 14px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; border-left: 5px solid transparent; }
+.prize:last-child { border-bottom: 0; }
+.prize.low { border-left-color: #f0a82e; background: #fffaf0; }
+.prize.out { border-left-color: var(--danger); background: #fff6f5; }
+.prize-main { text-align: left; border: 0; background: none; padding: 4px 0; min-height: 48px; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.prize-main:hover .prize-name { text-decoration: underline; }
+.prize-name { font-weight: 700; font-size: 17px; overflow-wrap: anywhere; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.prize-sub { font-size: 14px; color: var(--sub); overflow-wrap: anywhere; }
+.stepper { display: flex; align-items: center; gap: 6px; }
+.step-btn { width: 48px; height: 48px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--card); font-size: 26px; font-weight: 700; line-height: 1; display: grid; place-items: center; padding: 0; }
+.step-btn:hover { background: var(--brand-soft); }
+.step-btn[disabled] { opacity: .35; cursor: not-allowed; background: var(--card); }
+.qty { width: 72px; height: 48px; text-align: center; font-size: 22px; font-weight: 800; border: 1.5px solid var(--line); border-radius: 12px; background: #fff; padding: 0 4px; -moz-appearance: textfield; }
+.qty::-webkit-outer-spin-button, .qty::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.out .qty { color: var(--danger); }
+.of { font-size: 14px; color: var(--sub); min-width: 38px; }
+.prize .bar { grid-column: 1 / -1; height: 6px; margin: 0; }
+.prize.low .bar > i { background: #f0a82e; }
+.prize.out .bar > i { background: var(--danger); }
+@media (max-width: 480px) {
+  /* 좁은 화면에서는 이름을 윗줄, 수량 조절을 아랫줄에 두어 이름이 눌리지 않게 함 */
+  .prize { grid-template-columns: 1fr; }
+  .stepper { justify-content: space-between; }
+  .qty { flex: 1; min-width: 0; }
+}
+.empty-row { padding: 18px 14px; border-top: 1px solid var(--line); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; color: var(--sub); }
+
+/* 빈 화면 */
+.empty { padding: 28px 18px; text-align: center; }
+.empty h2 { margin: 0 0 6px; font-size: 20px; }
+.empty .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+
+/* 기록 */
+.record { padding: 12px 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.record-main { flex: 1; min-width: 200px; }
+.record-title { font-weight: 800; font-size: 18px; overflow-wrap: anywhere; }
+.record-meta { font-size: 14px; color: var(--sub); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tag { background: var(--brand-soft); color: var(--brand); border-radius: 8px; padding: 0 8px; font-weight: 700; font-size: 13px; }
+details.shown { flex-basis: 100%; font-size: 14px; color: var(--sub); }
+details.shown summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; }
+details.shown ul { margin: 4px 0 0; padding-left: 20px; }
+details.shown li.picked { color: var(--ink); font-weight: 800; }
+
+/* 설정 */
+.zone { padding: 16px; }
+.zone h2 { margin: 0 0 4px; font-size: 18px; }
+.zone.danger { border-color: #f0c0bb; }
+.zone p { margin: 4px 0 12px; }
+
+/* 모달 */
+.backdrop { position: fixed; inset: 0; background: rgba(20, 16, 8, .5); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal { background: var(--card); border-radius: 18px; width: 100%; max-width: 520px; max-height: calc(100vh - 32px); display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.modal-head { display: flex; align-items: center; padding: 8px 8px 8px 20px; border-bottom: 1px solid var(--line); }
+.modal-head h2 { margin: 0; font-size: 19px; flex: 1; }
+.modal-body { padding: 16px 20px; overflow-y: auto; }
+.modal-foot { padding: 12px 20px 16px; display: flex; gap: 10px; flex-wrap: wrap; border-top: 1px solid var(--line); }
+.modal-foot .spacer { flex: 1; }
+@media (max-width: 560px) {
+  .backdrop { align-items: flex-end; padding: 0; }
+  .modal { max-width: none; border-radius: 18px 18px 0 0; max-height: 92vh; }
+}
+
+/* 폼 */
+.field { margin-bottom: 16px; }
+.field > label, .field > .label { display: block; font-weight: 700; margin-bottom: 6px; }
+.field .opt { font-weight: 400; color: var(--sub); font-size: 14px; margin-left: 6px; }
+.field .hint { font-size: 14px; color: var(--sub); margin-top: 4px; }
+.input { width: 100%; min-height: 48px; border: 1.5px solid #c9c4b6; border-radius: 12px; padding: 8px 12px; background: #fff; }
+textarea.input { min-height: 84px; resize: vertical; }
+.input:focus { border-color: var(--brand); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 440px) { .row2 { grid-template-columns: 1fr; } }
+.rarity-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.rarity-pick label { position: relative; }
+.rarity-pick input { position: absolute; opacity: 0; inset: 0; }
+.rarity-pick span { display: grid; place-items: center; min-height: 48px; border: 2px solid var(--line); border-radius: 12px; font-weight: 700; font-size: 15px; text-align: center; padding: 2px; }
+.rarity-pick input:checked + span { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
+.rarity-pick input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+.num-field { display: flex; gap: 6px; }
+.num-field .input { text-align: center; font-weight: 800; font-size: 20px; -moz-appearance: textfield; }
+.num-field .input::-webkit-outer-spin-button, .num-field .input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.form-error { background: var(--danger-soft); color: var(--danger); border-radius: 10px; padding: 8px 12px; font-weight: 600; margin: 0 0 12px; }
+.check { display: flex; gap: 10px; align-items: center; min-height: 44px; font-weight: 700; }
+.check input { width: 22px; height: 22px; }
+
+/* 알림 */
+#toasts { position: fixed; left: 0; right: 0; bottom: 18px; z-index: 80; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 16px; pointer-events: none; }
+.toast { background: #2b2417; color: #fff; padding: 12px 18px; border-radius: 12px; font-weight: 600; box-shadow: 0 6px 20px rgba(0,0,0,.3); max-width: 520px; pointer-events: auto; }
+.toast.error { background: var(--danger); }
+.toast.ok { background: var(--ok); }
+
+.skeleton { padding: 40px; text-align: center; color: var(--sub); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <h1>어른문방구 <span>관리자</span></h1>
+    <div id="status" class="status" role="status"></div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="메뉴">
+    <button class="tab" role="tab" data-tab="prizes" id="tab-prizes">경품</button>
+    <button class="tab" role="tab" data-tab="records" id="tab-records">당첨 기록</button>
+    <button class="tab" role="tab" data-tab="settings" id="tab-settings">설정</button>
+  </nav>
+</header>
+
+<main id="app"><div class="skeleton">불러오는 중이에요…</div></main>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+'use strict';
+
+/* ───────── 상수 ───────── */
+const API = '/api/v1/admin';
+const POLL_MS = 8000;       // 손님이 뽑을 때마다 수량이 바뀌므로 주기적으로 새로 불러옴
+const LOW_STOCK = 2;        // 남은 수량이 이 이하면 "부족"으로 표시
+const RARITY = {
+  C:  { label: '일반',     cls: 'r-c'  },
+  R:  { label: '레어',     cls: 'r-r'  },
+  SR: { label: '슈퍼레어', cls: 'r-sr' },
+  UR: { label: '최고등급', cls: 'r-ur' },
+};
+const RARITY_KEYS = Object.keys(RARITY);
+const DEFAULT_PACKS = [
+  { name: '베이커리 이용권', icon: 'bakery' },
+  { name: '음료 이용권',     icon: 'drink' },
+  { name: '카드 슬리브',     icon: 'sleeve' },
+  { name: '카드 세이버',     icon: 'saver' },
+  { name: '부스터팩',        icon: 'booster' },
+  { name: '카드',            icon: 'card' },
+  { name: '할인권',          icon: 'discount' },
+];
+// 서버 에러 코드를 사장님이 이해하기 쉬운 말로 바꿈
+const ERROR_TEXT = {
+  PACK_NOT_EMPTY: '이 팩에는 경품이 남아 있어서 지울 수 없어요. 경품을 먼저 지우거나 다른 팩으로 옮겨 주세요.',
+  PACK_NOT_EXIST: '팩을 찾을 수 없어요. 다른 기기에서 지웠을 수 있어요. 새로고침해 주세요.',
+  PRIZE_NOT_EXIST: '경품을 찾을 수 없어요. 다른 기기에서 지웠을 수 있어요. 새로고침해 주세요.',
+  DRAW_NOT_EXIST: '기록을 찾을 수 없어요. 새로고침해 주세요.',
+  DRAW_NOT_CONFIRMED: '이미 되돌린 기록이에요. 새로고침해 주세요.',
+  INVALID_REQUEST: '입력한 내용을 다시 확인해 주세요. (이름은 50자까지, 수량은 0 이상의 숫자예요)',
+  INVALID_ENUM_VALUE: '등급을 다시 선택해 주세요.',
+  NETWORK: '서버에 연결할 수 없어요. 서버 컴퓨터가 켜져 있는지, 같은 와이파이인지 확인해 주세요.',
+};
+
+/* ───────── 상태 ───────── */
+const state = {
+  tab: 'prizes',
+  loaded: false,
+  loadError: null,
+  online: true,
+  updatedAt: null,
+  packs: [],
+  prizes: [],
+  draws: [],
+  filter: 'all',                 // all | low | out
+  collapsed: loadCollapsed(),    // 접어 둔 팩 id
+  lastPackId: null,              // 경품 추가할 때 직전에 쓴 팩/등급을 기억
+  lastRarity: 'C',
+};
+
+function loadCollapsed() {
+  try { return new Set(JSON.parse(localStorage.getItem('mbg-admin-collapsed') || '[]')); }
+  catch { return new Set(); }
+}
+function saveCollapsed() {
+  try { localStorage.setItem('mbg-admin-collapsed', JSON.stringify([...state.collapsed])); } catch { /* 저장 못 해도 동작에는 문제 없음 */ }
+}
+
+/* ───────── DOM 도우미 (사용자 입력을 항상 텍스트로만 넣어서 XSS 방지) ───────── */
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  let value;
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'text') el.textContent = v;
+    else if (k === 'value') value = v;
+    else if (k === 'checked' || k === 'disabled' || k === 'selected' || k === 'required') el[k] = true;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat(Infinity)) {
+    if (kid == null || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  if (value !== undefined) el.value = value;   // select는 option을 넣은 뒤에 값을 지정해야 함
+  return el;
+}
+
+/* ───────── 서버 통신 ───────── */
+class ApiError extends Error {
+  constructor(code, message) { super(message); this.code = code; }
+}
+
+async function api(method, path, body) {
+  let res;
+  try {
+    res = await fetch(API + path, {
+      method,
+      headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    setOnline(false);
+    throw new ApiError('NETWORK', ERROR_TEXT.NETWORK);
+  }
+  setOnline(true);
+  if (res.status === 204) return null;
+  let data = null;
+  try { data = await res.json(); } catch { /* 본문이 없는 응답 */ }
+  if (!res.ok) {
+    throw new ApiError(data?.code || 'ERROR', ERROR_TEXT[data?.code] || data?.message || '요청을 처리하지 못했어요. 잠시 뒤에 다시 해 주세요.');
+  }
+  return data;
+}
+
+function setOnline(online) {
+  if (state.online === online) return;
+  state.online = online;
+  renderStatus();
+}
+
+async function refresh() {
+  try {
+    const [packs, prizes] = await Promise.all([api('GET', '/packs'), api('GET', '/prizes')]);
+    state.packs = packs.packs;
+    state.prizes = prizes.prizes;
+    if (state.tab === 'records') state.draws = (await api('GET', '/draws')).draws;
+    state.loaded = true;
+    state.loadError = null;
+    state.updatedAt = new Date();
+  } catch (e) {
+    if (!state.loaded) state.loadError = e.message;
+  }
+  render();
+}
+
+/* 한 경품에 대한 수량 요청은 순서대로 보내고, 화면은 먼저 바꿔서 바로 반응하게 함 */
+const pending = new Map();   // prizeId → 아직 끝나지 않은 요청 수
+const chains = new Map();    // prizeId → 마지막 요청 Promise
+const failed = new Set();    // 요청이 실패해서 서버 값으로 되돌려야 하는 prizeId
+let pendingTotal = 0;
+
+function queueQuantityRequest(prize, request) {
+  const id = prize.id;
+  pending.set(id, (pending.get(id) || 0) + 1);
+  pendingTotal++;
+  const run = async () => {
+    try {
+      const updated = await request();
+      // 뒤에 대기 중인 요청이 있으면 그 요청이 끝난 값이 최종이므로 지금 응답은 화면에 반영하지 않음
+      if (pending.get(id) === 1) Object.assign(prize, updated);
+    } catch (e) {
+      toast(e.message, 'error');
+      failed.add(id);
+    } finally {
+      pendingTotal--;
+      const left = pending.get(id) - 1;
+      if (left > 0) {
+        pending.set(id, left);
+      } else {
+        pending.delete(id);
+        // 요청이 모두 끝난 뒤에, 실패가 있었다면 화면에서 먼저 바꿔 둔 값을 서버 값으로 되돌림
+        if (failed.delete(id)) refresh(); else render();
+      }
+    }
+  };
+  const prev = chains.get(id) || Promise.resolve();
+  const next = prev.then(run, run);
+  chains.set(id, next);
+  next.finally(() => { if (chains.get(id) === next) chains.delete(id); });
+}
+
+function adjustQuantity(prize, delta) {
+  const next = prize.remaining + delta;
+  if (next < 0) return;
+  prize.remaining = next;
+  if (next > prize.total) prize.total = next;   // 서버도 처음 수량보다 늘리면 처음 수량을 같이 늘림
+  render();
+  queueQuantityRequest(prize, () => api('PATCH', `/prize/${prize.id}/adjust`, { delta }));
+}
+
+function setQuantity(prize, value) {
+  if (!Number.isInteger(value) || value < 0 || value === prize.remaining) { render(); return; }
+  prize.remaining = value;
+  if (value > prize.total) prize.total = value;
+  render();
+  queueQuantityRequest(prize, () => api('PATCH', `/prize/${prize.id}/remaining`, { remaining: value }));
+}
+
+/* ───────── 계산 ───────── */
+const sum = (list, key) => list.reduce((acc, item) => acc + item[key], 0);
+const prizesOf = packId => state.prizes.filter(p => p.packId === packId);
+const stockClass = p => (p.remaining === 0 ? 'out' : p.remaining <= LOW_STOCK ? 'low' : '');
+const isSafeUrl = url => /^https?:\/\//i.test(url || '');
+
+function formatTime(iso) {
+  return new Date(iso).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+function ago(iso) {
+  const sec = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+  if (sec < 60) return '방금 전';
+  if (sec < 3600) return `${Math.floor(sec / 60)}분 전`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)}시간 전`;
+  return `${Math.floor(sec / 86400)}일 전`;
+}
+
+/* ───────── 알림, 모달 ───────── */
+function toast(message, kind) {
+  const el = h('div', { class: 'toast ' + (kind || ''), text: message });
+  document.getElementById('toasts').append(el);
+  setTimeout(() => el.remove(), kind === 'error' ? 7000 : 3200);
+}
+
+let modalEl = null;
+let modalOnClose = null;
+let modalReturnFocus = null;
+
+function openModal({ title, body, footer, onClose }) {
+  closeModal();
+  modalReturnFocus = document.activeElement;
+  modalOnClose = onClose || null;
+  const dialog = h('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
+    h('div', { class: 'modal-head' },
+      h('h2', { text: title }),
+      h('button', { class: 'icon-btn', type: 'button', 'aria-label': '닫기', onclick: () => closeModal(), text: '✕' })),
+    h('div', { class: 'modal-body' }, body),
+    footer ? h('div', { class: 'modal-foot' }, footer) : null);
+  dialog.addEventListener('keydown', trapTab);
+  modalEl = h('div', { class: 'backdrop' }, dialog);
+  document.body.append(modalEl);
+  document.body.classList.add('modal-open');
+  const first = dialog.querySelector('[data-autofocus]') || dialog.querySelector('input, select, textarea, button.btn');
+  if (first) first.focus();
+  return dialog;
+}
+
+function closeModal() {
+  if (!modalEl) return;
+  const onClose = modalOnClose;
+  modalEl.remove();
+  modalEl = null;
+  modalOnClose = null;
+  document.body.classList.remove('modal-open');
+  if (modalReturnFocus && document.contains(modalReturnFocus)) modalReturnFocus.focus();
+  if (onClose) onClose();
+}
+
+function trapTab(e) {
+  if (e.key !== 'Tab') return;
+  const items = [...e.currentTarget.querySelectorAll('button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])')]
+    .filter(el => !el.disabled && el.offsetParent !== null);
+  if (!items.length) return;
+  const first = items[0], last = items[items.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && modalEl) closeModal(); });
+
+/* 예/아니오 확인창, 확인하면 true */
+function confirmModal({ title, message, confirmText, danger }) {
+  return new Promise(resolve => {
+    let answered = false;
+    const answer = value => { answered = true; closeModal(); resolve(value); };
+    openModal({
+      title,
+      body: h('p', { style: 'margin:0;white-space:pre-line', text: message }),
+      footer: [
+        h('span', { class: 'spacer' }),
+        h('button', { class: 'btn', type: 'button', text: '취소', onclick: () => answer(false) }),
+        h('button', { class: 'btn ' + (danger ? 'btn-danger' : 'btn-primary'), type: 'button', 'data-autofocus': '', text: confirmText, onclick: () => answer(true) }),
+      ],
+      onClose: () => { if (!answered) resolve(false); },
+    });
+  });
+}
+
+/* ───────── 화면 그리기 ───────── */
+function render() {
+  const focusKey = document.activeElement?.dataset?.fk;
+  renderStatus();
+  renderTabs();
+  const app = document.getElementById('app');
+  const view = !state.loaded
+    ? (state.loadError ? loadErrorView() : h('div', { class: 'skeleton', text: '불러오는 중이에요…' }))
+    : state.tab === 'records' ? recordsView()
+    : state.tab === 'settings' ? settingsView()
+    : prizesView();
+  app.replaceChildren(view);
+  if (focusKey) app.querySelector(`[data-fk="${focusKey}"]`)?.focus();
+}
+
+function renderStatus() {
+  const el = document.getElementById('status');
+  el.className = 'status' + (state.online ? '' : ' offline');
+  const refreshBtn = h('button', { class: 'icon-btn', type: 'button', 'aria-label': '새로고침', title: '새로고침', onclick: () => refresh(), text: '↻' });
+  el.replaceChildren(
+    h('span', { class: 'dot' }),
+    h('span', { text: state.online ? (state.updatedAt ? `${state.updatedAt.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', second: '2-digit' })} 갱신` : '연결됨') : '서버와 연결이 끊겼어요' }),
+    refreshBtn);
+}
+
+function renderTabs() {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.setAttribute('aria-selected', String(tab.dataset.tab === state.tab));
+    if (tab.dataset.tab === 'prizes') {
+      const warn = state.prizes.filter(p => p.remaining <= LOW_STOCK).length;
+      tab.replaceChildren('경품', warn ? h('span', { class: 'count', title: '부족하거나 품절인 경품', text: warn }) : '');
+    }
+  });
+}
+
+function loadErrorView() {
+  return h('div', { class: 'card empty' },
+    h('h2', { text: '불러오지 못했어요' }),
+    h('p', { class: 'muted', text: state.loadError }),
+    h('div', { class: 'row' }, h('button', { class: 'btn btn-primary', onclick: () => refresh(), text: '다시 시도' })));
+}
+
+/* 경품 탭 */
+function prizesView() {
+  const view = h('div', { class: 'stack' });
+
+  if (!state.online) {
+    view.append(h('div', { class: 'banner banner-error', role: 'alert' },
+      h('span', { text: '서버와 연결이 끊겨서 마지막으로 불러온 내용을 보여 주고 있어요. 수량을 바꿔도 저장되지 않아요.' })));
+  }
+
+  if (!state.packs.length) {
+    view.append(emptyPacksView());
+    return view;
+  }
+
+  const sellable = state.packs.filter(p => p.active && sum(prizesOf(p.id), 'remaining') > 0);
+  if (!sellable.length) {
+    view.append(h('div', { class: 'banner banner-warn', role: 'alert' },
+      h('span', { text: '지금은 손님이 뽑을 수 있는 팩이 없어요. 모든 팩이 품절이거나 숨김 상태예요.' })));
+  }
+
+  view.append(summaryCard());
+
+  const low = state.prizes.filter(p => p.remaining > 0 && p.remaining <= LOW_STOCK).length;
+  const out = state.prizes.filter(p => p.remaining === 0).length;
+  const filterBtn = (key, label) => h('button', { type: 'button', 'aria-pressed': String(state.filter === key), text: label, onclick: () => { state.filter = key; render(); } });
+  view.append(h('div', { class: 'toolbar' },
+    h('button', { class: 'btn btn-primary', type: 'button', onclick: () => openPrizeForm(), text: '＋ 경품 추가' }),
+    h('button', { class: 'btn', type: 'button', onclick: () => openPackForm(), text: '＋ 팩 추가' }),
+    h('span', { class: 'grow' }),
+    h('div', { class: 'seg', role: 'group', 'aria-label': '경품 보기' },
+      filterBtn('all', '전체'), filterBtn('low', `부족 ${low}`), filterBtn('out', `품절 ${out}`))));
+
+  const match = p => state.filter === 'all' || (state.filter === 'out' ? p.remaining === 0 : p.remaining > 0 && p.remaining <= LOW_STOCK);
+  let shown = 0;
+  for (const pack of state.packs) {
+    const list = prizesOf(pack.id).filter(match);
+    if (state.filter !== 'all' && !list.length) continue;
+    shown++;
+    view.append(packCard(pack, list));
+  }
+  if (!shown) {
+    view.append(h('div', { class: 'card empty' },
+      h('h2', { text: state.filter === 'out' ? '품절된 경품이 없어요' : '수량이 부족한 경품이 없어요' }),
+      h('p', { class: 'muted', text: '모든 경품이 충분히 남아 있어요.' })));
+  }
+  return view;
+}
+
+function emptyPacksView() {
+  return h('div', { class: 'card empty' },
+    h('h2', { text: '아직 만든 팩이 없어요' }),
+    h('p', { class: 'muted', style: 'margin:0', text: '손님이 먼저 고르는 카드팩이에요. 팩을 만든 뒤 그 안에 경품을 넣어 주세요.' }),
+    h('div', { class: 'row' },
+      h('button', { class: 'btn btn-primary', type: 'button', onclick: e => createDefaultPacks(e.currentTarget), text: '기본 팩 7개 한 번에 만들기' }),
+      h('button', { class: 'btn', type: 'button', onclick: () => openPackForm(), text: '직접 만들기' })),
+    h('p', { class: 'muted small', style: 'margin:14px 0 0', text: '기본 팩: ' + DEFAULT_PACKS.map(p => p.name).join(', ') + ' (나중에 이름 바꾸기·지우기 가능)' }));
+}
+
+async function createDefaultPacks(button) {
+  button.disabled = true;
+  button.textContent = '만드는 중…';
+  try {
+    for (const pack of DEFAULT_PACKS) {
+      if (state.packs.some(p => p.name === pack.name)) continue;
+      await api('POST', '/pack', { name: pack.name, icon: pack.icon, active: true });
+    }
+    toast('기본 팩을 만들었어요. 이제 팩 안에 경품을 넣어 보세요.', 'ok');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+  await refresh();
+}
+
+function summaryCard() {
+  const remaining = sum(state.prizes, 'remaining');
+  const total = sum(state.prizes, 'total');
+  const pct = total ? Math.round(remaining / total * 100) : 0;
+  return h('div', { class: 'card summary' },
+    h('div', { class: 'summary-head' },
+      h('div', { class: 'summary-num' }, String(remaining), h('small', { text: ` / ${total}개 남음` })),
+      h('span', { class: 'muted small', text: total ? `${pct}%` : '' })),
+    h('div', { class: 'bar', role: 'img', 'aria-label': `전체 ${total}개 중 ${remaining}개 남음` }, h('i', { style: `width:${pct}%` })),
+    h('div', { class: 'chips' }, RARITY_KEYS.map(key => {
+      const list = state.prizes.filter(p => p.rarity === key);
+      return h('span', { class: 'chip' }, h('span', { class: 'rarity ' + RARITY[key].cls, text: RARITY[key].label }), `${sum(list, 'remaining')} / ${sum(list, 'total')}`);
+    })));
+}
+
+function packCard(pack, list) {
+  const all = prizesOf(pack.id);
+  const remaining = sum(all, 'remaining');
+  const total = sum(all, 'total');
+  const collapsed = state.collapsed.has(pack.id);
+
+  const badges = [];
+  if (!pack.active) badges.push(h('span', { class: 'badge badge-hide', text: '손님에게 숨김' }));
+  if (!all.length) badges.push(h('span', { class: 'badge badge-low', text: '경품 없음' }));
+  else if (remaining === 0) badges.push(h('span', { class: 'badge badge-out', text: '품절' }));
+
+  const thumb = h('div', { class: 'thumb', 'aria-hidden': 'true' },
+    isSafeUrl(pack.image) ? h('img', { src: pack.image, alt: '', loading: 'lazy' }) : [...pack.name][0]);
+
+  const head = h('div', { class: 'pack-head' },
+    h('button', {
+      class: 'pack-toggle', type: 'button', 'aria-expanded': String(!collapsed), 'data-fk': 'toggle-' + pack.id,
+      onclick: () => { collapsed ? state.collapsed.delete(pack.id) : state.collapsed.add(pack.id); saveCollapsed(); render(); },
+    },
+      thumb,
+      h('span', {},
+        h('span', { class: 'pack-title' }, h('span', { text: pack.name }), badges),
+        h('span', { class: 'pack-meta', text: all.length ? `경품 ${all.length}종 · ${remaining} / ${total}개 남음` : '아직 경품을 넣지 않았어요' })),
+      h('span', { class: 'chev', 'aria-hidden': 'true', text: '▼' })),
+    h('div', { class: 'pack-actions' },
+      h('label', { class: 'switch', title: '끄면 손님 화면에서 이 팩이 사라져요' },
+        h('input', { type: 'checkbox', checked: pack.active, 'data-fk': 'active-' + pack.id, onchange: e => togglePack(pack, e.currentTarget.checked) }),
+        h('span', { class: 'track', 'aria-hidden': 'true' }),
+        h('span', { text: '손님에게 보임' })),
+      h('button', { class: 'btn btn-small', type: 'button', onclick: () => openPrizeForm({ packId: pack.id }), text: '＋ 경품' }),
+      h('button', { class: 'btn btn-small', type: 'button', onclick: () => openPackForm(pack), text: '팩 설정' })));
+
+  const body = collapsed ? null
+    : list.length
+      ? h('ul', { class: 'prizes' }, list.map(prizeRow))
+      : h('div', { class: 'empty-row' },
+          h('span', { text: all.length ? '조건에 맞는 경품이 없어요.' : '이 팩에는 아직 경품이 없어요. 손님에게는 품절로 보여요.' }),
+          all.length ? null : h('button', { class: 'btn btn-small btn-primary', type: 'button', onclick: () => openPrizeForm({ packId: pack.id }), text: '＋ 경품 추가' }));
+
+  return h('section', { class: 'card pack' + (pack.active ? '' : ' hidden-pack'), 'aria-label': pack.name }, head, body);
+}
+
+async function togglePack(pack, active) {
+  const previous = pack.active;
+  pack.active = active;
+  render();
+  try {
+    await api('PATCH', `/pack/${pack.id}`, { active });
+    toast(active ? `'${pack.name}' 팩을 손님에게 보여요.` : `'${pack.name}' 팩을 손님에게서 숨겼어요.`, 'ok');
+  } catch (e) {
+    pack.active = previous;
+    toast(e.message, 'error');
+  }
+  render();
+}
+
+function prizeRow(p) {
+  const rarity = RARITY[p.rarity];
+  const pct = p.total ? Math.min(100, Math.round(p.remaining / p.total * 100)) : 0;
+  const status = stockClass(p);
+  return h('li', { class: 'prize ' + status },
+    h('button', { class: 'prize-main', type: 'button', 'data-fk': 'edit-' + p.id, 'aria-label': `${p.name} 수정`, onclick: () => openPrizeForm({ prize: p }) },
+      h('span', { class: 'prize-name' },
+        h('span', { class: 'rarity ' + rarity.cls, text: rarity.label }),
+        h('span', { text: p.name }),
+        status === 'out' ? h('span', { class: 'badge badge-out', text: '품절' }) : status === 'low' ? h('span', { class: 'badge badge-low', text: '부족' }) : null),
+      p.condition ? h('span', { class: 'prize-sub', text: p.condition }) : null),
+    h('div', { class: 'stepper' },
+      h('button', { class: 'step-btn', type: 'button', 'aria-label': `${p.name} 1개 줄이기`, 'data-fk': 'minus-' + p.id, disabled: p.remaining <= 0, onclick: () => adjustQuantity(p, -1), text: '−' }),
+      h('input', {
+        class: 'qty', type: 'number', inputmode: 'numeric', min: '0', step: '1', value: String(p.remaining), 'data-fk': 'qty-' + p.id,
+        'aria-label': `${p.name} 남은 수량`,
+        onfocus: e => e.currentTarget.select(),
+        onchange: e => setQuantity(p, Number(e.currentTarget.value)),
+        onkeydown: e => { if (e.key === 'Enter') e.currentTarget.blur(); },
+      }),
+      h('span', { class: 'of', text: `/ ${p.total}` }),
+      h('button', { class: 'step-btn', type: 'button', 'aria-label': `${p.name} 1개 늘리기`, 'data-fk': 'plus-' + p.id, onclick: () => adjustQuantity(p, +1), text: '＋' })),
+    h('div', { class: 'bar', 'aria-hidden': 'true' }, h('i', { style: `width:${pct}%` })));
+}
+
+/* 당첨 기록 탭 */
+function recordsView() {
+  const view = h('div', { class: 'stack' });
+  view.append(h('div', { class: 'toolbar' },
+    h('div', { class: 'grow' }, h('strong', { text: '손님이 가져간 경품' }), h('div', { class: 'muted small', text: '최근 100건이에요. 경품을 아직 안 줬거나 잘못 눌렀다면 되돌릴 수 있어요.' }))));
+
+  if (!state.draws.length) {
+    view.append(h('div', { class: 'card empty' },
+      h('h2', { text: '아직 당첨 기록이 없어요' }),
+      h('p', { class: 'muted', style: 'margin:0', text: '손님이 카드를 골라 확정하면 여기에 쌓여요.' })));
+    return view;
+  }
+
+  const names = new Map(state.prizes.map(p => [p.id, p.name]));
+  for (const d of state.draws) {
+    const counts = new Map();
+    d.shownPrizeIds.forEach(id => counts.set(id, (counts.get(id) || 0) + 1));
+    view.append(h('div', { class: 'card record' },
+      h('div', { class: 'record-main' },
+        h('div', { class: 'record-title', text: d.selectedPrizeName }),
+        h('div', { class: 'record-meta' }, h('span', { class: 'tag', text: d.packName }), h('span', { text: `${formatTime(d.confirmedAt)} · ${ago(d.confirmedAt)}` }))),
+      h('button', { class: 'btn btn-small btn-ghost-danger', type: 'button', onclick: () => cancelRecord(d), text: '되돌리기' }),
+      h('details', { class: 'shown' },
+        h('summary', { text: '같이 나왔던 카드 보기' }),
+        h('ul', {}, [...counts].map(([id, n]) =>
+          h('li', { class: id === d.selectedPrizeId ? 'picked' : '', text: `${names.get(id) ?? '삭제된 경품'}${n > 1 ? ` ×${n}` : ''}${id === d.selectedPrizeId ? ' (선택)' : ''}` }))))));
+  }
+  return view;
+}
+
+async function cancelRecord(d) {
+  const ok = await confirmModal({
+    title: '당첨 기록 되돌리기',
+    message: `'${d.selectedPrizeName}' 기록을 되돌릴까요?\n남은 수량이 1개 되돌아가요.\n(경품을 아직 주지 않았거나 잘못 눌렀을 때 사용해요)`,
+    confirmText: '되돌리기',
+    danger: true,
+  });
+  if (!ok) return;
+  try {
+    await api('POST', `/draw/${d.id}/cancel`);
+    toast(`'${d.selectedPrizeName}' 기록을 되돌렸어요. 수량이 1개 늘었어요.`, 'ok');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+  await refresh();
+}
+
+/* 설정 탭 */
+function settingsView() {
+  return h('div', { class: 'stack' },
+    h('div', { class: 'card zone danger' },
+      h('h2', { text: '이벤트 처음으로 되돌리기' }),
+      h('p', { class: 'muted', text: '모든 경품의 남은 수량을 처음 수량으로 되돌리고, 당첨 기록을 전부 지워요. 새 이벤트를 시작할 때 쓰세요. 되돌릴 수 없어요.' }),
+      h('button', { class: 'btn btn-ghost-danger', type: 'button', onclick: openResetModal, text: '이벤트 초기화…' })),
+    h('div', { class: 'card zone' },
+      h('h2', { text: '데이터 백업' }),
+      h('p', { class: 'muted', style: 'margin-bottom:0', text: '모든 데이터는 서버 컴퓨터의 moonbangoo.db 파일 하나에 저장돼요. 백업하려면 서버를 끈 뒤 이 파일을 다른 곳에 복사해 두세요.' })));
+}
+
+function openResetModal() {
+  const input = h('input', { class: 'input', type: 'text', autocomplete: 'off', 'aria-label': '확인 문구 입력', 'data-autofocus': '', placeholder: '초기화' });
+  const go = h('button', { class: 'btn btn-danger', type: 'submit', form: 'reset-form', disabled: true, text: '초기화하기' });
+  input.addEventListener('input', () => { go.disabled = input.value.trim() !== '초기화'; });
+  openModal({
+    title: '이벤트를 초기화할까요?',
+    body: h('form', { id: 'reset-form', onsubmit: async e => {
+      e.preventDefault();
+      if (input.value.trim() !== '초기화') return;
+      go.disabled = true;
+      try {
+        await api('POST', '/reset', { confirm: true });
+        closeModal();
+        toast('이벤트를 처음 상태로 되돌렸어요.', 'ok');
+        state.draws = [];
+        await refresh();
+      } catch (err) {
+        go.disabled = false;
+        toast(err.message, 'error');
+      }
+    } },
+      h('p', { style: 'margin-top:0', text: '남은 수량이 모두 처음 수량으로 돌아가고 당첨 기록이 전부 사라져요. 되돌릴 수 없어요.' }),
+      h('div', { class: 'field' }, h('label', { text: '계속하려면 아래에 "초기화"라고 입력해 주세요' }), input)),
+    footer: [h('span', { class: 'spacer' }), h('button', { class: 'btn', type: 'button', onclick: () => closeModal(), text: '취소' }), go],
+  });
+}
+
+/* ───────── 경품 추가/수정 ───────── */
+function openPrizeForm({ prize = null, packId = null, keepRarity = null } = {}) {
+  if (!state.packs.length) {
+    toast('먼저 팩을 만들어 주세요.', 'error');
+    openPackForm();
+    return;
+  }
+  const editing = !!prize;
+  const initialPack = prize?.packId ?? packId ?? (state.packs.some(p => p.id === state.lastPackId) ? state.lastPackId : state.packs[0].id);
+  const initialRarity = prize?.rarity ?? keepRarity ?? state.lastRarity;
+
+  const error = h('p', { class: 'form-error', role: 'alert', hidden: true });
+  const packSelect = h('select', { class: 'input', id: 'f-pack', value: String(initialPack) },
+    state.packs.map(p => h('option', { value: String(p.id), text: p.name + (p.active ? '' : ' (숨김)') })));
+  const nameInput = h('input', { class: 'input', id: 'f-name', type: 'text', maxlength: '50', required: true, autocomplete: 'off', 'data-autofocus': '', value: prize?.name ?? '', placeholder: '예: 식빵 1개 이용권' });
+  const rarityPick = h('div', { class: 'rarity-pick', role: 'radiogroup', 'aria-label': '등급' },
+    RARITY_KEYS.map(key => h('label', {},
+      h('input', { type: 'radio', name: 'rarity', value: key, checked: key === initialRarity }),
+      h('span', { text: RARITY[key].label }))));
+
+  const numInput = (id, value) => h('input', { class: 'input', id, type: 'number', inputmode: 'numeric', min: '0', step: '1', value: String(value), onfocus: e => e.currentTarget.select() });
+  const numField = (input, label, hint) => h('div', { class: 'field' },
+    h('label', { for: input.id, text: label }),
+    h('div', { class: 'num-field' },
+      h('button', { class: 'step-btn', type: 'button', 'aria-label': '줄이기', onclick: () => { input.value = Math.max(0, (Number(input.value) || 0) - 1); }, text: '−' }),
+      input,
+      h('button', { class: 'step-btn', type: 'button', 'aria-label': '늘리기', onclick: () => { input.value = (Number(input.value) || 0) + 1; }, text: '＋' })),
+    hint ? h('div', { class: 'hint', text: hint }) : null);
+
+  const totalInput = numInput('f-total', prize ? prize.total : 10);
+  const remainingInput = prize ? numInput('f-remaining', prize.remaining) : null;
+  const descInput = h('textarea', { class: 'input', id: 'f-desc', maxlength: '500', value: prize?.description ?? '', placeholder: '카드에 보여 줄 설명' });
+  const condInput = h('input', { class: 'input', id: 'f-cond', type: 'text', maxlength: '200', value: prize?.condition ?? '', placeholder: '예: 1만원 이상 구매 시 사용' });
+
+  const body = h('form', { id: 'prize-form', novalidate: true, onsubmit: e => { e.preventDefault(); save(false); } },
+    error,
+    h('div', { class: 'field' }, h('label', { for: 'f-pack', text: '어느 팩에 넣을까요?' }), packSelect),
+    h('div', { class: 'field' }, h('label', { for: 'f-name', text: '경품 이름' }), nameInput),
+    h('div', { class: 'field' }, h('span', { class: 'label', text: '등급' }), rarityPick),
+    editing
+      ? h('div', { class: 'row2' },
+          numField(remainingInput, '남은 수량', '지금 남아 있는 개수예요.'),
+          numField(totalInput, '처음 수량', '처음에 준비한 개수예요.'))
+      : numField(totalInput, '수량', '이 경품을 몇 개 준비했나요?'),
+    h('div', { class: 'field' }, h('label', { for: 'f-cond' }, '교환 조건', h('span', { class: 'opt', text: '(선택)' })), condInput),
+    h('div', { class: 'field' }, h('label', { for: 'f-desc' }, '설명', h('span', { class: 'opt', text: '(선택)' })), descInput));
+
+  const showError = message => { error.textContent = message; error.hidden = false; error.scrollIntoView({ block: 'nearest' }); };
+  const buttons = [];
+
+  async function save(addAnother) {
+    error.hidden = true;
+    const name = nameInput.value.trim();
+    const rarity = rarityPick.querySelector('input:checked')?.value;
+    const total = Number(totalInput.value);
+    if (!name) { showError('경품 이름을 입력해 주세요.'); nameInput.focus(); return; }
+    if (!rarity) { showError('등급을 선택해 주세요.'); return; }
+    if (!Number.isInteger(total) || total < 0) { showError('수량은 0 이상의 숫자로 입력해 주세요.'); totalInput.focus(); return; }
+    let remaining = null;
+    if (editing) {
+      remaining = Number(remainingInput.value);
+      if (!Number.isInteger(remaining) || remaining < 0) { showError('남은 수량은 0 이상의 숫자로 입력해 주세요.'); remainingInput.focus(); return; }
+      if (total < remaining) { showError('처음 수량은 남은 수량보다 적을 수 없어요. 남은 수량을 줄이거나 처음 수량을 늘려 주세요.'); totalInput.focus(); return; }
+    }
+    const targetPack = Number(packSelect.value);
+    buttons.forEach(b => { b.disabled = true; });
+    try {
+      if (editing) {
+        // 남은 수량을 먼저 바꿔야 "처음 수량 ≥ 남은 수량" 검사를 통과함
+        if (remaining !== prize.remaining) await api('PATCH', `/prize/${prize.id}/remaining`, { remaining });
+        await api('PATCH', `/prize/${prize.id}`, { packId: targetPack, name, rarity, total, description: descInput.value.trim(), condition: condInput.value.trim() });
+        toast(`'${name}' 경품을 저장했어요.`, 'ok');
+      } else {
+        await api('POST', '/prize', {
+          packId: targetPack, name, rarity, total,
+          ...(descInput.value.trim() && { description: descInput.value.trim() }),
+          ...(condInput.value.trim() && { condition: condInput.value.trim() }),
+        });
+        state.lastPackId = targetPack;
+        state.lastRarity = rarity;
+        toast(`'${name}' 경품을 추가했어요.`, 'ok');
+      }
+      closeModal();
+      await refresh();
+      if (addAnother) openPrizeForm({ packId: targetPack, keepRarity: rarity });
+    } catch (e) {
+      buttons.forEach(b => { b.disabled = false; });
+      showError(e.message);
+    }
+  }
+
+  const footer = [];
+  if (editing) {
+    footer.push(h('button', { class: 'btn btn-ghost-danger', type: 'button', onclick: () => deletePrize(prize), text: '삭제' }));
+  }
+  footer.push(h('span', { class: 'spacer' }));
+  const cancelBtn = h('button', { class: 'btn', type: 'button', onclick: () => closeModal(), text: '취소' });
+  const saveBtn = h('button', { class: 'btn btn-primary', type: 'submit', form: 'prize-form', text: editing ? '저장' : '추가' });
+  buttons.push(saveBtn);
+  footer.push(cancelBtn);
+  if (!editing) {
+    const again = h('button', { class: 'btn', type: 'button', onclick: () => save(true), text: '추가하고 계속' });
+    buttons.push(again);
+    footer.push(again);
+  }
+  footer.push(saveBtn);
+
+  openModal({ title: editing ? '경품 수정' : '경품 추가', body, footer });
+}
+
+async function deletePrize(prize) {
+  const ok = await confirmModal({
+    title: '경품 삭제',
+    message: `'${prize.name}' 경품을 삭제할까요?\n이미 뽑아 간 기록은 그대로 남아요.\n삭제한 경품은 되돌릴 수 없어요.`,
+    confirmText: '삭제',
+    danger: true,
+  });
+  if (!ok) { openPrizeForm({ prize }); return; }
+  try {
+    await api('DELETE', `/prize/${prize.id}`);
+    toast(`'${prize.name}' 경품을 삭제했어요.`, 'ok');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+  await refresh();
+}
+
+/* ───────── 팩 추가/수정 ───────── */
+function openPackForm(pack = null) {
+  const editing = !!pack;
+  const error = h('p', { class: 'form-error', role: 'alert', hidden: true });
+  const nameInput = h('input', { class: 'input', id: 'p-name', type: 'text', maxlength: '50', required: true, autocomplete: 'off', 'data-autofocus': '', value: pack?.name ?? '', placeholder: '예: 베이커리 이용권' });
+  const iconInput = h('input', { class: 'input', id: 'p-icon', type: 'text', maxlength: '30', autocomplete: 'off', list: 'icon-list', value: pack?.icon ?? '', placeholder: '예: bakery' });
+  const imageInput = h('input', { class: 'input', id: 'p-image', type: 'url', maxlength: '2048', autocomplete: 'off', value: pack?.image ?? '', placeholder: 'https://…' });
+  const activeInput = h('input', { type: 'checkbox', checked: pack ? pack.active : true });
+
+  const body = h('form', { id: 'pack-form', novalidate: true, onsubmit: e => { e.preventDefault(); save(); } },
+    error,
+    h('div', { class: 'field' }, h('label', { for: 'p-name', text: '팩 이름' }), nameInput,
+      h('div', { class: 'hint', text: '손님이 처음 고르는 카드팩 이름이에요.' })),
+    h('div', { class: 'field' }, h('label', { class: 'check' }, activeInput, '손님에게 보이기'),
+      h('div', { class: 'hint', text: '끄면 손님 화면에서 이 팩이 사라져요. 준비 중일 때 꺼 두세요.' })),
+    h('div', { class: 'field' }, h('label', { for: 'p-image' }, '이미지 주소', h('span', { class: 'opt', text: '(선택)' })), imageInput,
+      h('div', { class: 'hint', text: '카드에 쓸 그림 주소(http로 시작)예요. 아직 없으면 비워 두세요.' })),
+    h('div', { class: 'field' }, h('label', { for: 'p-icon' }, '아이콘 이름', h('span', { class: 'opt', text: '(선택)' })), iconInput,
+      h('datalist', { id: 'icon-list' }, DEFAULT_PACKS.map(p => h('option', { value: p.icon, text: p.name }))),
+      h('div', { class: 'hint', text: '카드 오른쪽 위 작은 그림을 정하는 이름이에요. 잘 모르면 비워 두세요.' })));
+
+  const showError = message => { error.textContent = message; error.hidden = false; error.scrollIntoView({ block: 'nearest' }); };
+  const buttons = [];
+
+  async function save() {
+    error.hidden = true;
+    const name = nameInput.value.trim();
+    const image = imageInput.value.trim();
+    if (!name) { showError('팩 이름을 입력해 주세요.'); nameInput.focus(); return; }
+    if (image && !isSafeUrl(image)) { showError('이미지 주소는 http:// 또는 https://로 시작해야 해요.'); imageInput.focus(); return; }
+    buttons.forEach(b => { b.disabled = true; });
+    const payload = { name, image, icon: iconInput.value.trim(), active: activeInput.checked };
+    try {
+      if (editing) await api('PATCH', `/pack/${pack.id}`, payload);
+      else await api('POST', '/pack', payload);
+      toast(`'${name}' 팩을 ${editing ? '저장' : '만들'}었어요.`, 'ok');
+      closeModal();
+      await refresh();
+    } catch (e) {
+      buttons.forEach(b => { b.disabled = false; });
+      showError(e.message);
+    }
+  }
+
+  const footer = [];
+  if (editing) footer.push(h('button', { class: 'btn btn-ghost-danger', type: 'button', onclick: () => deletePack(pack), text: '삭제' }));
+  footer.push(h('span', { class: 'spacer' }), h('button', { class: 'btn', type: 'button', onclick: () => closeModal(), text: '취소' }));
+  const saveBtn = h('button', { class: 'btn btn-primary', type: 'submit', form: 'pack-form', text: editing ? '저장' : '만들기' });
+  buttons.push(saveBtn);
+  footer.push(saveBtn);
+
+  openModal({ title: editing ? '팩 설정' : '팩 추가', body, footer });
+}
+
+async function deletePack(pack) {
+  const count = prizesOf(pack.id).length;
+  if (count > 0) {
+    openModal({
+      title: '팩을 지울 수 없어요',
+      body: h('p', { style: 'margin:0', text: `'${pack.name}' 팩에는 경품이 ${count}종 들어 있어요.\n경품을 먼저 삭제하거나, 경품을 눌러 다른 팩으로 옮긴 뒤에 지울 수 있어요.` }),
+      footer: [h('span', { class: 'spacer' }), h('button', { class: 'btn btn-primary', type: 'button', 'data-autofocus': '', onclick: () => closeModal(), text: '확인' })],
+    });
+    return;
+  }
+  const ok = await confirmModal({ title: '팩 삭제', message: `'${pack.name}' 팩을 삭제할까요?\n삭제한 팩은 되돌릴 수 없어요.`, confirmText: '삭제', danger: true });
+  if (!ok) { openPackForm(pack); return; }
+  try {
+    await api('DELETE', `/pack/${pack.id}`);
+    toast(`'${pack.name}' 팩을 삭제했어요.`, 'ok');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+  await refresh();
+}
+
+/* ───────── 시작 ───────── */
+function setTab(tab) {
+  if (!['prizes', 'records', 'settings'].includes(tab)) tab = 'prizes';
+  state.tab = tab;
+  if (location.hash !== '#' + tab) history.replaceState(null, '', '#' + tab);
+  render();
+  if (state.loaded && tab === 'records') refresh();
+}
+
+document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => setTab(tab.dataset.tab)));
+window.addEventListener('hashchange', () => { const t = location.hash.slice(1); if (t !== state.tab) setTab(t); });
+
+// 손님이 뽑는 동안에도 수량이 바뀌므로 주기적으로 새로 불러옴
+// 수정 중이거나 저장 중일 때는 화면이 바뀌어 입력이 사라지지 않도록 건너뜀
+function userIsBusy() {
+  const el = document.activeElement;
+  return !!modalEl || pendingTotal > 0 || (el && el.closest('#app') && el.matches('input, textarea, select'));
+}
+setInterval(() => { if (!document.hidden && !userIsBusy()) refresh(); }, POLL_MS);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !userIsBusy()) refresh(); });
+
+state.tab = ['prizes', 'records', 'settings'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'prizes';
+render();
+refresh();
+</script>
+</body>
+</html>
