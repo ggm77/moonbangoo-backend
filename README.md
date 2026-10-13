@@ -45,6 +45,7 @@ API 명세는 [docs/API.md](docs/API.md)를 참고하세요.
 
 - `spring.datasource`: 서버를 실행한 폴더의 SQLite 파일 `moonbangoo.db`를 사용합니다.
 - `server.port`: 기본 8080입니다.
+- `upload.dir`: 어드민에서 올린 팩 사진을 저장하는 폴더입니다(기본 `./uploads`, 서버를 실행한 폴더 기준). DB 파일과 마찬가지로 git에 올라가지 않으니 백업할 때 `moonbangoo.db`와 함께 복사하세요. 사진은 5MB까지, png/jpg/gif/webp만 올릴 수 있습니다.
 - `cors.allowed-origins`: 허용할 프론트엔드 주소 목록(쉼표로 구분)입니다.
 - `springdoc`: API 문서 경로(`/api/v3/api-docs`)와 Swagger UI(`/api/swagger`)입니다.
 

@@ -79,6 +79,8 @@
 | GET | `/api/v1/admin/pack/{id}` | 팩 조회 | 200 |
 | PATCH | `/api/v1/admin/pack/{id}` | 팩 수정 | 200 |
 | DELETE | `/api/v1/admin/pack/{id}` | 팩 삭제 | 204 |
+| POST | `/api/v1/admin/upload` | 이미지 업로드 (돌려준 주소를 팩 `image`에 사용) | 200 |
+| GET | `/uploads/{파일명}` | 업로드한 이미지 보기 | 200 |
 | POST | `/api/v1/admin/prize` | 경품 등록 | 200 |
 | GET | `/api/v1/admin/prizes` | 경품 목록 (`packId`로 필터) | 200 |
 | GET | `/api/v1/admin/prize/{id}` | 경품 조회 | 200 |
@@ -195,6 +197,19 @@
 ```json
 { "name": "베이커리 이용권", "image": "https://example.com/bakery.png", "icon": "bakery" }
 ```
+
+### POST /api/v1/admin/upload
+
+`multipart/form-data`로 `file` 필드에 이미지를 보낸다. png, jpg, gif, webp만 가능하고 최대 5MB다. 파일 이름이나 `Content-Type`이 아니라 파일 내용으로 형식을 판별하며, SVG는 허용하지 않는다. 저장 파일 이름은 서버가 새로 정한다.
+
+```json
+{ "url": "http://192.168.0.10:8080/uploads/3f2a9c1e-5b7d-4a6e-9d0c-1b2c3d4e5f60.png" }
+```
+
+돌려받은 `url`을 팩 등록·수정의 `image`에 그대로 넣는다. 서버 주소를 포함한 전체 주소이므로 다른 주소에서 띄운 프론트에서도 `<img src>`로 쓸 수 있다. 업로드만 하고 팩에 연결하지 않은 파일, 이미지를 바꾸거나 팩을 지운 뒤 남은 파일은 자동으로 지워지지 않는다.
+
+- `INVALID_IMAGE`(400): 파일이 없거나 비어 있거나 지원하지 않는 형식
+- `IMAGE_TOO_LARGE`(413): 5MB 초과
 
 ### GET /api/v1/admin/packs
 

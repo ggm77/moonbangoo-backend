@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @RestControllerAdvice
@@ -42,6 +43,20 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
         final ExceptionResponse response = new ExceptionResponse(ExceptionCode.INVALID_REQUEST);
 
         return ResponseEntity.status(ExceptionCode.INVALID_REQUEST.getHttpStatus()).body(response);
+    }
+
+    // 업로드 용량 초과 시 발생하는 예외 처리
+    // ResponseEntityExceptionHandler에 이미 존재해서 override함
+    @Override
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(
+            final MaxUploadSizeExceededException ex,
+            final HttpHeaders headers,
+            final HttpStatusCode status,
+            final WebRequest request
+    ) {
+        final ExceptionResponse response = new ExceptionResponse(ExceptionCode.IMAGE_TOO_LARGE);
+
+        return ResponseEntity.status(ExceptionCode.IMAGE_TOO_LARGE.getHttpStatus()).body(response);
     }
 
     // 나머지 모든 예외 처리

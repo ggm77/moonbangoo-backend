@@ -14,6 +14,8 @@ public enum ExceptionCode {
     PRIZE_NOT_EXIST(HttpStatus.BAD_REQUEST, "경품이 존재하지 않습니다."),
     DRAW_NOT_EXIST(HttpStatus.BAD_REQUEST, "뽑기 기록이 존재하지 않습니다."),
     PRIZE_NOT_IN_DRAW(HttpStatus.BAD_REQUEST, "뽑은 카드에 없는 경품입니다."),
+    INVALID_IMAGE(HttpStatus.BAD_REQUEST, "png, jpg, gif, webp 이미지만 올릴 수 있습니다."),
+    IMAGE_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "이미지 크기는 5MB 이하여야 합니다."),
 
     PACK_NOT_EMPTY(HttpStatus.CONFLICT, "경품이 남아있는 팩은 삭제할 수 없습니다."),
     PACK_INACTIVE(HttpStatus.CONFLICT, "사용할 수 없는 팩입니다."),

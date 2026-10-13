@@ -206,6 +206,12 @@ details.shown li.picked { color: var(--ink); font-weight: 800; }
 .field { margin-bottom: 16px; }
 .field > label, .field > .label { display: block; font-weight: 700; margin-bottom: 6px; }
 .field .opt { font-weight: 400; color: var(--sub); font-size: 14px; margin-left: 6px; }
+.image-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.image-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.image-preview { width: 72px; height: 72px; font-size: 28px; }
+.image-url { margin-top: 8px; font-size: 14px; color: var(--sub); }
+.image-url summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; }
+.image-url .input { margin-top: 6px; }
 .field .hint { font-size: 14px; color: var(--sub); margin-top: 4px; }
 .input { width: 100%; min-height: 48px; border: 1.5px solid #c9c4b6; border-radius: 12px; padding: 8px 12px; background: #fff; }
 textarea.input { min-height: 84px; resize: vertical; }
@@ -284,6 +290,8 @@ const ERROR_TEXT = {
   DRAW_NOT_CONFIRMED: '이미 되돌린 기록이에요. 새로고침해 주세요.',
   INVALID_REQUEST: '입력한 내용을 다시 확인해 주세요. (이름은 50자까지, 수량은 0 이상의 숫자예요)',
   INVALID_ENUM_VALUE: '등급을 다시 선택해 주세요.',
+  INVALID_IMAGE: 'png, jpg, gif, webp 사진만 올릴 수 있어요.',
+  IMAGE_TOO_LARGE: '사진이 너무 커요. 5MB 이하로 올려 주세요.',
   NETWORK: '서버에 연결할 수 없어요. 서버 컴퓨터가 켜져 있는지, 같은 와이파이인지 확인해 주세요.',
 };
 
@@ -335,6 +343,25 @@ function h(tag, attrs, ...kids) {
 /* ───────── 서버 통신 ───────── */
 class ApiError extends Error {
   constructor(code, message) { super(message); this.code = code; }
+}
+
+async function uploadImage(file) {
+  const form = new FormData();
+  form.append('file', file);
+  let res;
+  try {
+    res = await fetch(API + '/upload', { method: 'POST', body: form });
+  } catch {
+    setOnline(false);
+    throw new ApiError('NETWORK', ERROR_TEXT.NETWORK);
+  }
+  setOnline(true);
+  let data = null;
+  try { data = await res.json(); } catch { /* 본문이 없는 응답 */ }
+  if (!res.ok) {
+    throw new ApiError(data?.code || 'ERROR', ERROR_TEXT[data?.code] || '사진을 올리지 못했어요. 잠시 뒤에 다시 해 주세요.');
+  }
+  return data.url;
 }
 
 async function api(method, path, body) {
@@ -960,14 +987,46 @@ function openPackForm(pack = null) {
   const imageInput = h('input', { class: 'input', id: 'p-image', type: 'url', maxlength: '2048', autocomplete: 'off', value: pack?.image ?? '', placeholder: 'https://…' });
   const activeInput = h('input', { type: 'checkbox', checked: pack ? pack.active : true });
 
+  // 사진 올리기: 고른 즉시 서버에 올리고, 돌려받은 주소를 이미지 주소 칸에 넣음 (저장은 "저장" 버튼에서)
+  const preview = h('div', { class: 'thumb image-preview', 'aria-hidden': 'true' });
+  const fileInput = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/gif,image/webp', hidden: true });
+  const pickBtn = h('button', { class: 'btn', type: 'button', onclick: () => fileInput.click() });
+  const clearBtn = h('button', { class: 'btn', type: 'button', text: '사진 지우기', onclick: () => { imageInput.value = ''; renderPreview(); } });
+  function renderPreview() {
+    const url = imageInput.value.trim();
+    preview.replaceChildren(isSafeUrl(url) ? h('img', { src: url, alt: '' }) : '🖼');
+    pickBtn.textContent = isSafeUrl(url) ? '사진 바꾸기' : '사진 올리기';
+    clearBtn.hidden = !url;
+  }
+  imageInput.addEventListener('input', renderPreview);
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    fileInput.value = '';
+    if (!file) return;
+    error.hidden = true;
+    pickBtn.disabled = true;
+    saveBtn.disabled = true;
+    pickBtn.textContent = '올리는 중…';
+    try {
+      imageInput.value = await uploadImage(file);
+    } catch (e) {
+      showError(e.message);
+    }
+    pickBtn.disabled = false;
+    saveBtn.disabled = false;
+    renderPreview();
+  });
+
   const body = h('form', { id: 'pack-form', novalidate: true, onsubmit: e => { e.preventDefault(); save(); } },
     error,
     h('div', { class: 'field' }, h('label', { for: 'p-name', text: '팩 이름' }), nameInput,
       h('div', { class: 'hint', text: '손님이 처음 고르는 카드팩 이름이에요.' })),
     h('div', { class: 'field' }, h('label', { class: 'check' }, activeInput, '손님에게 보이기'),
       h('div', { class: 'hint', text: '끄면 손님 화면에서 이 팩이 사라져요. 준비 중일 때 꺼 두세요.' })),
-    h('div', { class: 'field' }, h('label', { for: 'p-image' }, '이미지 주소', h('span', { class: 'opt', text: '(선택)' })), imageInput,
-      h('div', { class: 'hint', text: '카드에 쓸 그림 주소(http로 시작)예요. 아직 없으면 비워 두세요.' })),
+    h('div', { class: 'field' }, h('div', { class: 'label' }, '이미지', h('span', { class: 'opt', text: '(선택)' })),
+      h('div', { class: 'image-row' }, preview, h('div', { class: 'image-actions' }, pickBtn, clearBtn)), fileInput,
+      h('div', { class: 'hint', text: '카드에 쓸 사진이에요(png, jpg, gif, webp / 5MB까지). 아직 없으면 비워 두세요.' }),
+      h('details', { class: 'image-url' }, h('summary', { text: '인터넷 주소로 넣기' }), imageInput)),
     h('div', { class: 'field' }, h('label', { for: 'p-icon' }, '아이콘 이름', h('span', { class: 'opt', text: '(선택)' })), iconInput,
       h('datalist', { id: 'icon-list' }, DEFAULT_PACKS.map(p => h('option', { value: p.icon, text: p.name }))),
       h('div', { class: 'hint', text: '카드 오른쪽 위 작은 그림을 정하는 이름이에요. 잘 모르면 비워 두세요.' })));
@@ -1002,6 +1061,7 @@ function openPackForm(pack = null) {
   buttons.push(saveBtn);
   footer.push(saveBtn);
 
+  renderPreview();
   openModal({ title: editing ? '팩 설정' : '팩 추가', body, footer });
 }
 

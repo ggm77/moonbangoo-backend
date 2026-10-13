@@ -14,9 +14,17 @@ spring:
   sql:
     init:
       mode: always
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
 
 server:
   port: 8080
+
+# 업로드한 이미지를 저장하는 폴더 (서버를 실행한 폴더 기준)
+upload:
+  dir: ./uploads
 
 
 cors:
