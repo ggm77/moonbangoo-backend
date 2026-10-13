@@ -79,7 +79,7 @@
 | GET | `/api/v1/admin/pack/{id}` | 팩 조회 | 200 |
 | PATCH | `/api/v1/admin/pack/{id}` | 팩 수정 | 200 |
 | DELETE | `/api/v1/admin/pack/{id}` | 팩 삭제 | 204 |
-| POST | `/api/v1/admin/upload` | 이미지 업로드 (돌려준 주소를 팩 `image`에 사용) | 200 |
+| POST | `/api/v1/admin/upload` | 이미지 업로드 (서버에 저장하고 주소를 돌려줌) | 200 |
 | GET | `/uploads/{파일명}` | 업로드한 이미지 보기 | 200 |
 | POST | `/api/v1/admin/prize` | 경품 등록 | 200 |
 | GET | `/api/v1/admin/prizes` | 경품 목록 (`packId`로 필터) | 200 |
@@ -104,12 +104,12 @@
 ```json
 {
   "packs": [
-    { "id": 1, "name": "베이커리 이용권", "image": "https://example.com/bakery.png", "icon": "bakery", "available": true }
+    { "id": 1, "name": "베이커리 이용권", "icon": "bakery", "available": true }
   ]
 }
 ```
 
-`image`, `icon`은 `null`일 수 있다.
+`icon`은 `null`일 수 있다.
 
 ### POST /api/v1/packs/{packId}/draw
 
@@ -134,14 +134,13 @@
       "icon": "discount",
       "packId": 3,
       "packName": "할인권",
-      "packImage": null,
       "packIcon": "coupon"
     }
   ]
 }
 ```
 
-`cards`는 항상 5개다(위 예시는 1개만 표시). `icon`은 경품 종류 아이콘 키다. 한 팩에 여러 종류의 경품을 섞어 넣어도 카드마다 종류를 표시할 수 있다. `description`, `condition`, `icon`, `packImage`, `packIcon`은 `null`일 수 있다. 수량은 응답에 포함하지 않는다.
+`cards`는 항상 5개다(위 예시는 1개만 표시). `icon`은 경품 종류 아이콘 키다. 한 팩에 여러 종류의 경품을 섞어 넣어도 카드마다 종류를 표시할 수 있다. `description`, `condition`, `icon`, `packIcon`은 `null`일 수 있다. 수량은 응답에 포함하지 않는다.
 
 에러: `PACK_NOT_EXIST`(400), `PACK_INACTIVE`(409), 남은 경품이 없으면 `PACK_SOLD_OUT`(409).
 
@@ -172,7 +171,6 @@
 {
   "id": 1,
   "name": "베이커리 이용권",
-  "image": "https://example.com/bakery.png",
   "icon": "bakery",
   "active": true,
   "prizeCount": 2,
@@ -190,12 +188,11 @@
 | 필드 | 타입 | 필수 | 조건 |
 | --- | --- | --- | --- |
 | `name` | string | 예 | 최대 50자 |
-| `image` | string | 아니오 | 이미지 URL, 최대 2048자 |
 | `icon` | string | 아니오 | 카드 우상단 아이콘 키, 최대 30자 |
 | `active` | boolean | 아니오 | 생략하면 `true`. `false`면 손님에게 보이지 않고 뽑을 수 없다. |
 
 ```json
-{ "name": "베이커리 이용권", "image": "https://example.com/bakery.png", "icon": "bakery" }
+{ "name": "베이커리 이용권", "icon": "bakery" }
 ```
 
 ### POST /api/v1/admin/upload
@@ -206,7 +203,7 @@
 { "url": "http://192.168.0.10:8080/uploads/3f2a9c1e-5b7d-4a6e-9d0c-1b2c3d4e5f60.png" }
 ```
 
-돌려받은 `url`을 팩 등록·수정의 `image`에 그대로 넣는다. 서버 주소를 포함한 전체 주소이므로 다른 주소에서 띄운 프론트에서도 `<img src>`로 쓸 수 있다. 업로드만 하고 팩에 연결하지 않은 파일, 이미지를 바꾸거나 팩을 지운 뒤 남은 파일은 자동으로 지워지지 않는다.
+`url`은 서버 주소를 포함한 전체 주소이므로 다른 주소에서 띄운 프론트에서도 `<img src>`로 쓸 수 있다. 팩 등 다른 데이터와는 연결되지 않으며, 올린 파일은 자동으로 지워지지 않는다.
 
 - `INVALID_IMAGE`(400): 파일이 없거나 비어 있거나 지원하지 않는 형식
 - `IMAGE_TOO_LARGE`(413): 5MB 초과
@@ -225,10 +222,10 @@
 
 ### PATCH /api/v1/admin/pack/{id}
 
-`name`, `image`, `icon`, `active` 중 바꿀 값만 보낸다. 조건은 등록과 같다.
+`name`, `icon`, `active` 중 바꿀 값만 보낸다. 조건은 등록과 같다.
 
 - 보내지 않은 필드와 `null`은 변경하지 않는다.
-- `image`, `icon`에 빈 문자열(`""`)을 보내면 값이 지워진다.
+- `icon`에 빈 문자열(`""`)을 보내면 값이 지워진다.
 
 ```json
 { "name": "빵집 이용권", "active": false }

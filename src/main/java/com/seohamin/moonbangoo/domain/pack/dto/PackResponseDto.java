@@ -12,7 +12,6 @@ import java.time.Instant;
 public class PackResponseDto {
     private final Long id;
     private final String name;
-    private final String image;
     private final String icon;
     private final boolean active;
 
@@ -36,7 +35,6 @@ public class PackResponseDto {
     ) {
         this.id = pack.getId();
         this.name = pack.getName();
-        this.image = pack.getImage();
         this.icon = pack.getIcon();
         this.active = pack.isActive();
         this.prizeCount = prizeCount;

@@ -6,7 +6,6 @@
 CREATE TABLE IF NOT EXISTS pack (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     name       VARCHAR(50) NOT NULL,
-    image      VARCHAR(2048),
     icon       VARCHAR(30),
     active     BOOLEAN     NOT NULL,
     created_at TIMESTAMP   NOT NULL,

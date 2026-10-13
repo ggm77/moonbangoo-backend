@@ -437,7 +437,6 @@ function setQuantity(prize, value) {
 const sum = (list, key) => list.reduce((acc, item) => acc + item[key], 0);
 const prizesOf = packId => state.prizes.filter(p => p.packId === packId);
 const stockClass = p => (p.remaining === 0 ? 'out' : p.remaining <= LOW_STOCK ? 'low' : '');
-const isSafeUrl = url => /^https?:\/\//i.test(url || '');
 
 function formatTime(iso) {
   return new Date(iso).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -663,7 +662,7 @@ function packCard(pack, list) {
   else if (remaining === 0) badges.push(h('span', { class: 'badge badge-out', text: '품절' }));
 
   const thumb = h('div', { class: 'thumb', 'aria-hidden': 'true' },
-    isSafeUrl(pack.image) ? h('img', { src: pack.image, alt: '', loading: 'lazy' }) : [...pack.name][0]);
+    [...pack.name][0]);
 
   const head = h('div', { class: 'pack-head' },
     h('button', {
@@ -957,7 +956,6 @@ function openPackForm(pack = null) {
   const error = h('p', { class: 'form-error', role: 'alert', hidden: true });
   const nameInput = h('input', { class: 'input', id: 'p-name', type: 'text', maxlength: '50', required: true, autocomplete: 'off', 'data-autofocus': '', value: pack?.name ?? '', placeholder: '예: 베이커리 이용권' });
   const iconInput = h('input', { class: 'input', id: 'p-icon', type: 'text', maxlength: '30', autocomplete: 'off', list: 'icon-list', value: pack?.icon ?? '', placeholder: '예: bakery' });
-  const imageInput = h('input', { class: 'input', id: 'p-image', type: 'url', maxlength: '2048', autocomplete: 'off', value: pack?.image ?? '', placeholder: 'https://…' });
   const activeInput = h('input', { type: 'checkbox', checked: pack ? pack.active : true });
 
   const body = h('form', { id: 'pack-form', novalidate: true, onsubmit: e => { e.preventDefault(); save(); } },
@@ -966,8 +964,6 @@ function openPackForm(pack = null) {
       h('div', { class: 'hint', text: '손님이 처음 고르는 카드팩 이름이에요.' })),
     h('div', { class: 'field' }, h('label', { class: 'check' }, activeInput, '손님에게 보이기'),
       h('div', { class: 'hint', text: '끄면 손님 화면에서 이 팩이 사라져요. 준비 중일 때 꺼 두세요.' })),
-    h('div', { class: 'field' }, h('label', { for: 'p-image' }, '이미지 주소', h('span', { class: 'opt', text: '(선택)' })), imageInput,
-      h('div', { class: 'hint', text: '카드에 쓸 그림 주소(http로 시작)예요. 아직 없으면 비워 두세요.' })),
     h('div', { class: 'field' }, h('label', { for: 'p-icon' }, '아이콘 이름', h('span', { class: 'opt', text: '(선택)' })), iconInput,
       h('datalist', { id: 'icon-list' }, DEFAULT_PACKS.map(p => h('option', { value: p.icon, text: p.name }))),
       h('div', { class: 'hint', text: '카드 오른쪽 위 작은 그림을 정하는 이름이에요. 잘 모르면 비워 두세요.' })));
@@ -978,11 +974,9 @@ function openPackForm(pack = null) {
   async function save() {
     error.hidden = true;
     const name = nameInput.value.trim();
-    const image = imageInput.value.trim();
     if (!name) { showError('팩 이름을 입력해 주세요.'); nameInput.focus(); return; }
-    if (image && !isSafeUrl(image)) { showError('이미지 주소는 http:// 또는 https://로 시작해야 해요.'); imageInput.focus(); return; }
     buttons.forEach(b => { b.disabled = true; });
-    const payload = { name, image, icon: iconInput.value.trim(), active: activeInput.checked };
+    const payload = { name, icon: iconInput.value.trim(), active: activeInput.checked };
     try {
       if (editing) await api('PATCH', `/pack/${pack.id}`, payload);
       else await api('POST', '/pack', payload);

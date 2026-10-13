@@ -20,7 +20,6 @@ public class DrawCardResponseDto {
     private final String icon;
     private final Long packId;
     private final String packName;
-    private final String packImage;
     private final String packIcon;
 
     public DrawCardResponseDto(final Prize prize) {
@@ -34,7 +33,6 @@ public class DrawCardResponseDto {
         this.icon = prize.getIcon();
         this.packId = pack.getId();
         this.packName = pack.getName();
-        this.packImage = pack.getImage();
         this.packIcon = pack.getIcon();
     }
 }

@@ -11,7 +11,6 @@ import lombok.Getter;
 public class PackItemResponseDto {
     private final Long id;
     private final String name;
-    private final String image;
     private final String icon;
 
     //남은 경품이 있어서 뽑을 수 있는지 (false면 품절)
@@ -20,7 +19,6 @@ public class PackItemResponseDto {
     public PackItemResponseDto(final Pack pack, final boolean available) {
         this.id = pack.getId();
         this.name = pack.getName();
-        this.image = pack.getImage();
         this.icon = pack.getIcon();
         this.available = available;
     }

@@ -26,10 +26,6 @@ public class Pack extends BaseTimeEntity {
     @Column(length = 50, nullable = false)
     private String name;
 
-    //팩 이미지 url, 팩에 들어있는 경품 카드의 일러스트로 사용
-    @Column(length = 2048, nullable = true)
-    private String image;
-
     //카드 우상단 아이콘 키
     @Column(length = 30, nullable = true)
     private String icon;
@@ -41,12 +37,10 @@ public class Pack extends BaseTimeEntity {
     @Builder
     public Pack(
             final String name,
-            final String image,
             final String icon,
             final boolean active
     ){
         this.name = name;
-        this.image = image;
         this.icon = icon;
         this.active = active;
     }
@@ -54,11 +48,6 @@ public class Pack extends BaseTimeEntity {
     //이름 변경
     public void updateName(final String name){
         this.name = name;
-    }
-
-    //이미지 변경
-    public void updateImage(final String image){
-        this.image = image;
     }
 
     //아이콘 변경

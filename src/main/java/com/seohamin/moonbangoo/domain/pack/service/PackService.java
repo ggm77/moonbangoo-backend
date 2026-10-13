@@ -33,7 +33,6 @@ public class PackService {
 
         final Pack pack = packRepository.save(Pack.builder()
                 .name(packRequestDto.getName())
-                .image(blankToNull(packRequestDto.getImage()))
                 .icon(blankToNull(packRequestDto.getIcon()))
                 .active(packRequestDto.getActive() == null || packRequestDto.getActive())
                 .build());
@@ -103,10 +102,6 @@ public class PackService {
         }
 
         //선택 값은 빈 문자열이면 지움
-        if(packRequestDto.getImage() != null){
-            pack.updateImage(blankToNull(packRequestDto.getImage()));
-        }
-
         if(packRequestDto.getIcon() != null){
             pack.updateIcon(blankToNull(packRequestDto.getIcon()));
         }

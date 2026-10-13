@@ -49,11 +49,10 @@ class PackAdminFlowTest {
 
     private long createBakery() throws Exception {
         final String response = createPack("""
-                {"name":"베이커리 이용권","image":"https://example.com/bakery.png","icon":"bakery"}
+                {"name":"베이커리 이용권","icon":"bakery"}
                 """)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("베이커리 이용권"))
-                .andExpect(jsonPath("$.image").value("https://example.com/bakery.png"))
                 .andExpect(jsonPath("$.icon").value("bakery"))
                 .andExpect(jsonPath("$.active").value(true))
                 .andExpect(jsonPath("$.prizeCount").value(0))
@@ -69,12 +68,11 @@ class PackAdminFlowTest {
 
         //보낸 값만 수정되고 빈 문자열은 지워짐
         patch("/api/v1/admin/pack/" + packId, """
-                {"name":"빵집 이용권","image":"","active":false}
+                {"name":"빵집 이용권","icon":"","active":false}
                 """)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("빵집 이용권"))
-                .andExpect(jsonPath("$.image").value(nullValue()))
-                .andExpect(jsonPath("$.icon").value("bakery"))
+                .andExpect(jsonPath("$.icon").value(nullValue()))
                 .andExpect(jsonPath("$.active").value(false));
 
         mockMvc.perform(get("/api/v1/admin/pack/" + packId))
