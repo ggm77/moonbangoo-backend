@@ -71,3 +71,4 @@ out/
 
 # 실행기(exe) 빌드 결과물
 /launcher/release/
+/launcher/release-mac/

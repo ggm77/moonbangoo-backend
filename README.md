@@ -56,20 +56,23 @@ API 명세는 [docs/API.md](docs/API.md)를 참고하세요.
 - 테이블은 `src/main/resources/schema.sql`이 서버를 시작할 때 만듭니다(이미 있으면 건드리지 않음). Hibernate의 SQLite dialect가 자동 증가 id 컬럼을 올바르게 만들지 못해서 `ddl-auto`를 쓰지 않고 직접 관리합니다. **엔티티 컬럼을 바꾸면 `schema.sql`도 같이 고치고**, 이미 만들어진 DB 파일에는 `ALTER TABLE`을 직접 실행하거나 DB 파일을 지우고 다시 만들어야 합니다.
 - 이전에 MariaDB를 쓰던 데이터는 옮겨지지 않습니다.
 
-## Windows 실행 파일(exe) 만들기
+## 실행 파일 만들기 (Windows exe, 맥)
 
-서버 jar를 실행해 주는 작은 실행기(`launcher/launcher.py`)를 exe로 묶어 두면, 가게 PC에서 더블클릭만으로 서버를 켤 수 있습니다. 실행기는 같은 폴더의 `moonbangoo.jar`를 실행하고, 서버가 준비되면 접속 주소를 보여주며 손님 화면을 브라우저로 엽니다. 창을 닫거나 Ctrl+C를 누르면 서버도 같이 종료됩니다.
+서버 jar를 실행해 주는 작은 실행기(`launcher/launcher.py`)를 실행 파일로 묶어 두면, 가게 PC에서 더블클릭만으로 서버를 켤 수 있습니다. 실행기는 같은 폴더의 `moonbangoo.jar`를 실행하고, 서버가 준비되면 접속 주소를 보여주며 손님 화면을 브라우저로 엽니다. 창을 닫거나 Ctrl+C를 누르면 서버도 같이 종료됩니다.
 
-```bat
-launcher\build.bat   :: Windows에서 실행 (Python 3.8+, JDK 25 필요)
-```
+PyInstaller는 빌드한 OS와 CPU용 파일만 만들 수 있어서, 쓸 PC의 OS에서 각각 빌드해야 합니다. 둘 다 Python 3.8+와 JDK 25가 필요합니다.
 
-`launcher\release`에 `moonbangoo.exe`와 `moonbangoo.jar`가 만들어집니다. 두 파일을 **같은 폴더**에 두고 `moonbangoo.exe`를 실행하세요.
+| OS | 빌드 | 결과물 |
+| --- | --- | --- |
+| Windows | `launcher\build.bat` | `launcher\release\moonbangoo.exe` + `moonbangoo.jar` |
+| 맥 | `./launcher/build.sh` | `launcher/release-mac/moonbangoo` + `moonbangoo.jar` |
 
-- DB(`moonbangoo.db`)와 업로드 사진(`uploads`)은 exe가 있는 폴더에 생깁니다. 백업도 이 폴더를 복사하면 됩니다.
-- Java는 `jre` 폴더(`jre\bin\java.exe`) → `JAVA_HOME` → `PATH` 순서로 찾습니다. Java 25가 없는 PC라면 JRE를 `jre` 폴더로 같이 넣어주세요.
-- 포트를 바꾸려면 `moonbangoo.exe --server.port=9000`처럼 실행합니다. 브라우저 자동 실행을 끄려면 `--no-browser`를 붙입니다.
-- PyInstaller는 만든 OS용 실행 파일만 만들 수 있어서 exe는 Windows에서 빌드해야 합니다. 맥/리눅스에서는 `python3 launcher/launcher.py`로 같은 동작을 확인할 수 있습니다(jar를 같은 폴더에 두고).
+결과물의 실행 파일과 `moonbangoo.jar`를 **같은 폴더**에 두고 실행하세요.
+
+- DB(`moonbangoo.db`)와 업로드 사진(`uploads`)은 실행 파일이 있는 폴더에 생깁니다. 백업도 이 폴더를 복사하면 됩니다.
+- Java는 `jre` 폴더(`jre\bin\java.exe`, 맥은 `jre/bin/java`) → `JAVA_HOME` → `PATH` 순서로 찾습니다. Java 25가 없는 PC라면 JRE를 `jre` 폴더로 같이 넣어주세요.
+- 포트를 바꾸려면 `moonbangoo --server.port=9000`처럼 실행합니다. 브라우저 자동 실행을 끄려면 `--no-browser`를 붙입니다.
+- 맥 실행 파일은 만든 맥과 같은 CPU(Apple Silicon/Intel)에서만 실행됩니다. 다른 맥으로 옮겼을 때 "확인되지 않은 개발자" 경고로 막히면 `xattr -cr 폴더경로`를 실행하세요.
 
 ## 실행 및 테스트
 
