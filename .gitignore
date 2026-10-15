@@ -68,3 +68,6 @@ out/
 *.db
 *.db-shm
 *.db-wal
+
+# 실행기(exe) 빌드 결과물
+/launcher/release/
