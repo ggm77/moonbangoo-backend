@@ -3,11 +3,13 @@ package com.seohamin.moonbangoo.domain.prize;
 import com.jayway.jsonpath.JsonPath;
 import com.seohamin.moonbangoo.domain.pack.entity.Pack;
 import com.seohamin.moonbangoo.domain.pack.repository.PackRepository;
+import com.seohamin.moonbangoo.domain.admin.AdminLoggedInConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -22,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(AdminLoggedInConfig.class)
 @Transactional
 @ActiveProfiles("test")
 class PrizeAdminFlowTest {

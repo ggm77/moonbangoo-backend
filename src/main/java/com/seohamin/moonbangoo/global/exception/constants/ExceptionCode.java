@@ -17,6 +17,9 @@ public enum ExceptionCode {
     INVALID_IMAGE(HttpStatus.BAD_REQUEST, "png, jpg, gif, webp 이미지만 올릴 수 있습니다."),
     IMAGE_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "이미지 크기는 5MB 이하여야 합니다."),
 
+    ADMIN_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "관리자 로그인이 필요합니다."),
+    INVALID_ADMIN_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 올바르지 않습니다."),
+
     PACK_NOT_EMPTY(HttpStatus.CONFLICT, "경품이 남아있는 팩은 삭제할 수 없습니다."),
     PACK_INACTIVE(HttpStatus.CONFLICT, "사용할 수 없는 팩입니다."),
     PACK_SOLD_OUT(HttpStatus.CONFLICT, "팩에 남은 경품이 없습니다."),

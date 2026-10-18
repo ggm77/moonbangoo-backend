@@ -21,6 +21,16 @@ spring:
 
 server:
   port: 8080
+  servlet:
+    session:
+      # 어드민 로그인 유지 시간, 로그인 쿠키는 같은 주소에서 보낸 요청에만 붙음
+      timeout: 12h
+      cookie:
+        same-site: strict
+
+# 어드민 페이지 비밀번호 (평문, 반드시 바꿔서 사용)
+admin:
+  password: moonbangoo1234
 
 # 업로드한 이미지를 저장하는 폴더 (서버를 실행한 폴더 기준)
 upload:

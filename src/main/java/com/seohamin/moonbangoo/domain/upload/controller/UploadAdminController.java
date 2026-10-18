@@ -14,7 +14,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
  * 사장님이 이미지를 올리는 API
- * 인증 없음, 가게 내부망에서만 접속하는 것을 전제로 함
+ * 로그인(AdminAuthController)한 사람만 호출할 수 있음
  */
 @RestController
 @RequestMapping("/api/v1/admin")

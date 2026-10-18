@@ -20,5 +20,8 @@ spring:
 cors:
   allowed-origins: http://localhost:5173
 
+admin:
+  password: test-password
+
 upload:
   dir: build/test-uploads

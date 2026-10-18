@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
  * 사장님이 쓰는 어드민 페이지
  * 사장님 기기 브라우저에서 http://서버주소:포트/admin 으로 접속
  * 화면과 API가 같은 서버에서 나가므로 주소가 하나이고 CORS 설정이 필요 없음
- * 인증 없음, 가게 내부망에서만 접속하는 것을 전제로 함
+ * 화면 파일은 누구나 받을 수 있고, 화면 안에서 비밀번호로 로그인해야 어드민 API를 쓸 수 있음
  */
 @Hidden
 @RestController

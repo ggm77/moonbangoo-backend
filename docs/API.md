@@ -28,7 +28,13 @@
 
 ### 인증
 
-인증은 없다. 서버는 가게 내부망에서만 접속하는 것을 전제로 하며, 모든 API(`/api/v1/admin/**` 포함)를 인증 없이 호출할 수 있다. 서버 포트를 외부에 공개하지 않는다.
+어드민 API(`/api/v1/admin/**`)는 로그인해야 호출할 수 있다. 손님용 API(`/api/v1/**`)와 상태 확인 경로는 인증이 없다.
+
+- 비밀번호는 `application.yaml`의 `admin.password` 한 개이다.
+- `POST /api/v1/admin/login`에 `{"password": "..."}`를 보내면 `204`와 함께 로그인 쿠키(`JSESSIONID`, `SameSite=Strict`)를 내려준다. 이후 요청에는 브라우저가 쿠키를 자동으로 붙이며, 12시간 동안 쓰지 않으면 만료된다.
+- 비밀번호가 틀리면 `401 INVALID_ADMIN_PASSWORD`, 로그인하지 않고 어드민 API를 호출하면 `401 ADMIN_UNAUTHORIZED`를 반환한다.
+- `POST /api/v1/admin/logout`은 로그인 쿠키를 무효화하고 `204`를 반환한다.
+- 서버는 가게 내부망에서만 접속하는 것을 전제로 하며 서버 포트를 외부에 공개하지 않는다. 로그인은 http 평문으로 오가므로 같은 망의 다른 기기가 엿볼 수 있다.
 
 ### 에러 응답
 
@@ -45,6 +51,8 @@
 | --- | --- | --- |
 | `INVALID_REQUEST` | 400 | 필수 값 누락, 길이·범위 위반, 수량이 0 미만이 되는 증감, 남은 수량보다 작은 처음 수량, 확인 값 없는 초기화 |
 | `INVALID_ENUM_VALUE` | 400 | 없는 등급 값 |
+| `ADMIN_UNAUTHORIZED` | 401 | 로그인하지 않고(또는 로그인이 만료된 채로) 어드민 API 호출 |
+| `INVALID_ADMIN_PASSWORD` | 401 | 어드민 비밀번호가 틀림 |
 | `PACK_NOT_EXIST` | 400 | 팩 없음 |
 | `PRIZE_NOT_EXIST` | 400 | 경품 없음 |
 | `DRAW_NOT_EXIST` | 400 | 뽑기 기록 없음 |
@@ -74,6 +82,8 @@
 | GET | `/api/v1/packs` | 손님이 고를 팩 목록 | 200 |
 | POST | `/api/v1/packs/{packId}/draw` | 팩에서 카드 뽑기 (5장, 수량 차감 없음) | 200 |
 | POST | `/api/v1/draws/{drawId}/confirm` | 가져갈 경품 확정 (1 차감) | 200 |
+| POST | `/api/v1/admin/login` | 어드민 로그인 (비밀번호) | 204 |
+| POST | `/api/v1/admin/logout` | 어드민 로그아웃 | 204 |
 | POST | `/api/v1/admin/pack` | 팩 등록 | 200 |
 | GET | `/api/v1/admin/packs` | 팩 목록 (비활성 포함, 수량 합 포함) | 200 |
 | GET | `/api/v1/admin/pack/{id}` | 팩 조회 | 200 |

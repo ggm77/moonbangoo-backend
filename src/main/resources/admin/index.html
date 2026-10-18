@@ -231,6 +231,9 @@ textarea.input { min-height: 84px; resize: vertical; }
 .toast.error { background: var(--danger); }
 .toast.ok { background: var(--ok); }
 
+.login { max-width: 380px; margin: 32px auto; padding: 24px; }
+.login h2 { margin: 0 0 4px; }
+.login .banner { margin-bottom: 16px; }
 .skeleton { padding: 40px; text-align: center; color: var(--sub); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -284,11 +287,15 @@ const ERROR_TEXT = {
   DRAW_NOT_CONFIRMED: '이미 되돌린 기록이에요. 새로고침해 주세요.',
   INVALID_REQUEST: '입력한 내용을 다시 확인해 주세요. (이름은 50자까지, 수량은 0 이상의 숫자예요)',
   INVALID_ENUM_VALUE: '등급을 다시 선택해 주세요.',
+  ADMIN_UNAUTHORIZED: '로그인이 풀렸어요. 비밀번호를 다시 입력해 주세요.',
+  INVALID_ADMIN_PASSWORD: '비밀번호가 맞지 않아요. 다시 입력해 주세요.',
   NETWORK: '서버에 연결할 수 없어요. 서버 컴퓨터가 켜져 있는지, 같은 와이파이인지 확인해 주세요.',
 };
 
 /* ───────── 상태 ───────── */
 const state = {
+  authed: true,                  // 서버가 로그인하라고 하면(401) false로 바뀌고 로그인 화면을 보여줌
+  loginError: null,
   tab: 'prizes',
   loaded: false,
   loadError: null,
@@ -354,9 +361,44 @@ async function api(method, path, body) {
   let data = null;
   try { data = await res.json(); } catch { /* 본문이 없는 응답 */ }
   if (!res.ok) {
+    if (data?.code === 'ADMIN_UNAUTHORIZED') requireLogin();
     throw new ApiError(data?.code || 'ERROR', ERROR_TEXT[data?.code] || data?.message || '요청을 처리하지 못했어요. 잠시 뒤에 다시 해 주세요.');
   }
   return data;
+}
+
+/* 로그인이 필요해지면(처음 접속, 세션 만료, 서버 재시작) 보이던 데이터를 지우고 로그인 화면으로 바꿈 */
+function requireLogin() {
+  if (!state.authed) return;
+  state.authed = false;
+  state.loaded = false;
+  state.loadError = null;
+  state.loginError = null;
+  state.packs = [];
+  state.prizes = [];
+  state.draws = [];
+  if (modalEl) closeModal();
+  render();
+}
+
+async function login(password) {
+  try {
+    await api('POST', '/login', { password });
+  } catch (e) {
+    state.loginError = e.message;
+    render();
+    return;
+  }
+  state.authed = true;
+  state.loginError = null;
+  state.loadError = null;
+  render();
+  await refresh();
+}
+
+async function logout() {
+  try { await api('POST', '/logout'); } catch { /* 이미 로그아웃된 상태여도 로그인 화면으로 보냄 */ }
+  requireLogin();
 }
 
 function setOnline(online) {
@@ -526,13 +568,16 @@ function render() {
   renderStatus();
   renderTabs();
   const app = document.getElementById('app');
-  const view = !state.loaded
+  document.querySelector('.tabs').style.display = state.authed ? '' : 'none';
+  const view = !state.authed ? loginView()
+    : !state.loaded
     ? (state.loadError ? loadErrorView() : h('div', { class: 'skeleton', text: '불러오는 중이에요…' }))
     : state.tab === 'records' ? recordsView()
     : state.tab === 'settings' ? settingsView()
     : prizesView();
   app.replaceChildren(view);
   if (focusKey) app.querySelector(`[data-fk="${focusKey}"]`)?.focus();
+  if (!state.authed) app.querySelector('input')?.focus();
 }
 
 function renderStatus() {
@@ -553,6 +598,22 @@ function renderTabs() {
       tab.replaceChildren('경품', warn ? h('span', { class: 'count', title: '부족하거나 품절인 경품', text: warn }) : '');
     }
   });
+}
+
+function loginView() {
+  const input = h('input', { class: 'input', id: 'admin-password', type: 'password', autocomplete: 'current-password', required: true, 'aria-label': '비밀번호' });
+  const go = h('button', { class: 'btn btn-primary', type: 'submit', text: '들어가기' });
+  return h('form', { class: 'card login', onsubmit: async e => {
+    e.preventDefault();
+    if (!input.value) return;
+    go.disabled = true;
+    await login(input.value);
+  } },
+    h('h2', { text: '관리자 로그인' }),
+    h('p', { class: 'muted', text: '관리자 비밀번호를 입력해 주세요.' }),
+    state.loginError ? h('div', { class: 'banner banner-error', role: 'alert', text: state.loginError }) : null,
+    h('div', { class: 'field' }, input),
+    go);
 }
 
 function loadErrorView() {
@@ -785,6 +846,10 @@ function settingsView() {
       h('h2', { text: '이벤트 처음으로 되돌리기' }),
       h('p', { class: 'muted', text: '모든 경품의 남은 수량을 처음 수량으로 되돌리고, 당첨 기록을 전부 지워요. 새 이벤트를 시작할 때 쓰세요. 되돌릴 수 없어요.' }),
       h('button', { class: 'btn btn-ghost-danger', type: 'button', onclick: openResetModal, text: '이벤트 초기화…' })),
+    h('div', { class: 'card zone' },
+      h('h2', { text: '로그아웃' }),
+      h('p', { class: 'muted', text: '공용 기기에서 쓴 뒤에는 로그아웃해 주세요. 다시 들어올 때 비밀번호가 필요해요.' }),
+      h('button', { class: 'btn', type: 'button', onclick: logout, text: '로그아웃' })),
     h('div', { class: 'card zone' },
       h('h2', { text: '데이터 백업' }),
       h('p', { class: 'muted', style: 'margin-bottom:0', text: '모든 데이터는 서버 컴퓨터의 moonbangoo.db 파일 하나에 저장돼요. 백업하려면 서버를 끈 뒤 이 파일을 다른 곳에 복사해 두세요.' })));
@@ -1036,7 +1101,7 @@ window.addEventListener('hashchange', () => { const t = location.hash.slice(1); 
 // 수정 중이거나 저장 중일 때는 화면이 바뀌어 입력이 사라지지 않도록 건너뜀
 function userIsBusy() {
   const el = document.activeElement;
-  return !!modalEl || pendingTotal > 0 || (el && el.closest('#app') && el.matches('input, textarea, select'));
+  return !state.authed || !!modalEl || pendingTotal > 0 || (el && el.closest('#app') && el.matches('input, textarea, select'));
 }
 setInterval(() => { if (!document.hidden && !userIsBusy()) refresh(); }, POLL_MS);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !userIsBusy()) refresh(); });

@@ -37,12 +37,13 @@ API 명세는 [docs/API.md](docs/API.md)를 참고하세요.
 
 ## 운영 방식
 
-로그인과 인증은 없습니다. 서버는 가게 내부망에서만 접속할 수 있게 운영하고, 게임은 가게 TV, 어드민은 사장님 기기에서 같은 서버에 접속하는 것을 전제로 합니다. 어드민 API(`/api/v1/admin/**`)도 인증 없이 호출할 수 있으므로 서버 포트를 외부에 공개하지 마세요(포트포워딩 금지). 이벤트 초기화처럼 되돌릴 수 없는 API는 `{"confirm": true}`를 요구합니다.
+어드민 페이지와 어드민 API(`/api/v1/admin/**`)는 비밀번호로 로그인해야 쓸 수 있습니다. 비밀번호는 `application.yaml`의 `admin.password`에 평문으로 있으니 처음에 꼭 바꾸세요. 손님이 쓰는 게임과 뽑기 API는 로그인이 없습니다. 서버는 가게 내부망에서만 접속할 수 있게 운영하고, 게임은 가게 TV, 어드민은 사장님 기기에서 같은 서버에 접속하는 것을 전제로 합니다. 로그인은 http 평문이므로 서버 포트를 외부에 공개하지 마세요(포트포워딩 금지). 이벤트 초기화처럼 되돌릴 수 없는 API는 `{"confirm": true}`를 요구합니다.
 
 ## 설정
 
-설정은 `src/main/resources/application.yaml`에 있고 git에 포함됩니다. 비밀번호나 API 키 같은 민감한 값은 이 파일에 넣지 말고 환경변수나 `application-dev.yaml`, `application-prod.yaml`(git에서 제외됨)로 분리하세요.
+설정은 `src/main/resources/application.yaml`에 있고 git에 포함됩니다. 어드민 비밀번호(`admin.password`)는 예외로 이 파일에 평문으로 둡니다. 그 밖의 API 키 같은 민감한 값은 환경변수나 `application-dev.yaml`, `application-prod.yaml`(git에서 제외됨)로 분리하세요.
 
+- `admin.password`: 어드민 페이지 비밀번호입니다. 비어 있으면 서버가 시작되지 않습니다. 한 번 로그인하면 12시간(`server.servlet.session.timeout`) 동안 유지되고, 서버를 다시 켜면 다시 입력해야 합니다.
 - `spring.datasource`: 서버를 실행한 폴더의 SQLite 파일 `moonbangoo.db`를 사용합니다.
 - `server.port`: 기본 8080입니다.
 - `upload.dir`: 업로드 API로 올린 사진을 저장하는 폴더입니다(기본 `./uploads`, 서버를 실행한 폴더 기준). DB 파일과 마찬가지로 git에 올라가지 않으니 백업할 때 `moonbangoo.db`와 함께 복사하세요. 사진은 5MB까지, png/jpg/gif/webp만 올릴 수 있습니다.
