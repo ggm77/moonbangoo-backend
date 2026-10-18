@@ -13,7 +13,7 @@ API 명세는 [docs/API.md](docs/API.md)를 참고하세요.
 
 - Java 25, Spring Boot 4.1 (Web MVC, Data JPA, Validation)
 - SQLite (파일 DB, 테스트는 인메모리)
-- springdoc-openapi (Swagger UI: `/api/swagger`)
+- springdoc-openapi (Swagger UI: `/api/swagger`, 기본으로 꺼져 있음)
 
 ## 뽑기 규칙
 
@@ -48,7 +48,7 @@ API 명세는 [docs/API.md](docs/API.md)를 참고하세요.
 - `server.port`: 기본 8080입니다.
 - `upload.dir`: 업로드 API로 올린 사진을 저장하는 폴더입니다(기본 `./uploads`, 서버를 실행한 폴더 기준). DB 파일과 마찬가지로 git에 올라가지 않으니 백업할 때 `moonbangoo.db`와 함께 복사하세요. 사진은 5MB까지, png/jpg/gif/webp만 올릴 수 있습니다.
 - `cors.allowed-origins`: 허용할 프론트엔드 주소 목록(쉼표로 구분)입니다.
-- `springdoc`: API 문서 경로(`/api/v3/api-docs`)와 Swagger UI(`/api/swagger`)입니다.
+- `springdoc`: API 문서(`/api/v3/api-docs`)와 Swagger UI(`/api/swagger`)이며 기본으로 꺼져 있습니다. 쓰려면 `api-docs.enabled`와 `swagger-ui.enabled`를 `true`로 바꾸세요.
 
 ## 데이터베이스
 
