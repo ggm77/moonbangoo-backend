@@ -103,6 +103,49 @@ class DrawFlowTest {
     }
 
     @Test
+    void 손님은_로그인_없이_팩의_경품을_품절_포함_등록_순서로_볼_수_있다() throws Exception {
+        final Pack pack = savePack("베이커리", true);
+        final Prize first = savePrize(pack, "A", Rarity.C, 100);
+        final Prize soldOut = savePrize(pack, "품절", Rarity.UR, 0);
+        savePrize(savePack("음료", true), "다른 팩", Rarity.R, 5);
+        prizeRepository.save(Prize.builder().pack(pack).name("최소").rarity(Rarity.R).total(3).build());
+
+        mockMvc.perform(get("/api/v1/packs/" + pack.getId() + "/prizes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.prizes", hasSize(3)))
+                .andExpect(jsonPath("$.prizes[0].id").value(first.getId()))
+                .andExpect(jsonPath("$.prizes[0].name").value("A"))
+                .andExpect(jsonPath("$.prizes[0].rarity").value("C"))
+                .andExpect(jsonPath("$.prizes[0].icon").value("bakery"))
+                .andExpect(jsonPath("$.prizes[0].description").value("A 설명"))
+                .andExpect(jsonPath("$.prizes[0].condition").value("현장 즉시 증정"))
+                .andExpect(jsonPath("$.prizes[0].remaining").value(100))
+                .andExpect(jsonPath("$.prizes[0].total").value(100))
+                .andExpect(jsonPath("$.prizes[1].id").value(soldOut.getId()))
+                .andExpect(jsonPath("$.prizes[1].remaining").value(0))
+                .andExpect(jsonPath("$.prizes[1].total").value(0))
+                .andExpect(jsonPath("$.prizes[2].icon").doesNotExist())
+                .andExpect(jsonPath("$.prizes[2].description").doesNotExist())
+                .andExpect(jsonPath("$.prizes[0].packId").doesNotExist())
+                .andExpect(jsonPath("$.prizes[0].createdAt").doesNotExist())
+                .andExpect(jsonPath("$.prizes[0].updatedAt").doesNotExist());
+    }
+
+    @Test
+    void 경품_목록은_없는_팩이면_400_비활성_팩이면_409를_준다() throws Exception {
+        final Pack hidden = savePack("숨김", false);
+        savePrize(hidden, "숨김 경품", Rarity.C, 1);
+
+        mockMvc.perform(get("/api/v1/packs/999999/prizes"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PACK_NOT_EXIST"));
+
+        mockMvc.perform(get("/api/v1/packs/" + hidden.getId() + "/prizes"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("PACK_INACTIVE"));
+    }
+
+    @Test
     void 선택한_팩_안에서만_카드_5장을_등급_오름차순으로_뽑는다() throws Exception {
         final Pack pack = saveFullPack("베이커리");
         final Pack other = saveFullPack("음료");

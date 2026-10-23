@@ -80,6 +80,7 @@
 | 메서드 | 경로 | 기능 | 성공 |
 | --- | --- | --- | --- |
 | GET | `/api/v1/packs` | 손님이 고를 팩 목록 | 200 |
+| GET | `/api/v1/packs/{packId}/prizes` | 팩의 경품 목록 (품절 포함, 남은/전체 수량) | 200 |
 | POST | `/api/v1/packs/{packId}/draw` | 팩에서 카드 뽑기 (5장, 수량 차감 없음) | 200 |
 | POST | `/api/v1/draws/{drawId}/confirm` | 가져갈 경품 확정 (1 차감) | 200 |
 | POST | `/api/v1/admin/login` | 어드민 로그인 (비밀번호) | 204 |
@@ -120,6 +121,29 @@
 ```
 
 `icon`은 `null`일 수 있다.
+
+### GET /api/v1/packs/{packId}/prizes
+
+로그인 없이 호출할 수 있다. 팩의 경품을 등록 순서대로 반환한다. 오리파 화면이 "남은 수량 / 전체 수량"을 보여주므로 **품절(`remaining: 0`) 경품도 포함**한다. 팩 id 등 관리용 값과 `createdAt`, `updatedAt`은 포함하지 않는다.
+
+```json
+{
+  "prizes": [
+    {
+      "id": 7,
+      "name": "5% 할인권",
+      "rarity": "C",
+      "icon": "discount",
+      "description": "매장 상품 5% 할인",
+      "condition": "현장 즉시 증정",
+      "remaining": 95,
+      "total": 100
+    }
+  ]
+}
+```
+
+`icon`, `description`, `condition`은 `null`일 수 있다. 없는 팩이면 `400 PACK_NOT_EXIST`, 비활성 팩이면 `409 PACK_INACTIVE`(뽑기와 같은 기준)를 반환한다.
 
 ### POST /api/v1/packs/{packId}/draw
 

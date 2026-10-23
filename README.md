@@ -43,7 +43,7 @@ API 명세는 [docs/API.md](docs/API.md)를 참고하세요.
 
 설정은 `src/main/resources/application.yaml`에 있고 git에 포함됩니다. 어드민 비밀번호(`admin.password`)는 예외로 이 파일에 평문으로 둡니다. 그 밖의 API 키 같은 민감한 값은 환경변수나 `application-dev.yaml`, `application-prod.yaml`(git에서 제외됨)로 분리하세요.
 
-- `admin.password`: 어드민 페이지 비밀번호입니다. 비어 있으면 서버가 시작되지 않습니다. 한 번 로그인하면 12시간(`server.servlet.session.timeout`) 동안 유지되고, 서버를 다시 켜면 다시 입력해야 합니다.
+- `admin.password`: 어드민 페이지 비밀번호입니다. 비어 있으면 서버가 시작되지 않습니다. 레포가 public이면 기본값(`moonbangoo1234`)을 누구나 볼 수 있으므로 매장용으로는 반드시 바꾸세요. jar를 다시 빌드하지 않고 실행 인자 `--admin.password=새비밀번호`로 덮어쓸 수 있고, 실행기(launcher)도 받은 인자를 jar에 그대로 넘깁니다. `application-prod.yaml`에 적으려면 `--spring.profiles.active=prod`도 같이 넘겨야 읽힙니다. 한 번 로그인하면 12시간(`server.servlet.session.timeout`) 동안 유지되고, 서버를 다시 켜면 다시 입력해야 합니다.
 - `spring.datasource`: 서버를 실행한 폴더의 SQLite 파일 `moonbangoo.db`를 사용합니다.
 - `server.port`: 기본 8080입니다.
 - `upload.dir`: 업로드 API로 올린 사진을 저장하는 폴더입니다(기본 `./uploads`, 서버를 실행한 폴더 기준). DB 파일과 마찬가지로 git에 올라가지 않으니 백업할 때 `moonbangoo.db`와 함께 복사하세요. 사진은 5MB까지, png/jpg/gif/webp만 올릴 수 있습니다.

@@ -69,6 +69,24 @@ public class PrizeService {
     }
 
     /**
+     * 손님에게 보여줄 팩의 경품 목록을 조회하는 메서드
+     * 오리파 화면이 "남은 수량 / 전체 수량"을 함께 보여주므로 품절 경품도 포함
+     * 뽑기와 같은 기준으로 없는 팩은 PACK_NOT_EXIST, 비활성 팩은 PACK_INACTIVE
+     * @param packId 팩 아이디
+     * @return 손님용 경품 목록 DTO (등록 순서)
+     */
+    @Transactional(readOnly = true)
+    public PrizeItemListResponseDto getPrizeItems(final Long packId){
+        if(!findPack(packId).isActive()){
+            throw new CustomException(ExceptionCode.PACK_INACTIVE);
+        }
+
+        return new PrizeItemListResponseDto(prizeRepository.findAllByPackId(packId).stream()
+                .map(PrizeItemResponseDto::new)
+                .toList());
+    }
+
+    /**
      * 경품 정보를 수정하는 메서드
      * 변경할 값만 변경, 남은 수량은 따로 수정
      * @param prizeId 경품 아이디
