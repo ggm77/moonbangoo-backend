@@ -6,9 +6,10 @@
 <meta name="theme-color" content="#f8f5ee">
 <meta name="description" content="어른뭉방구 게임 메뉴">
 <title>어른뭉방구 · 게임 메뉴</title>
-<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
+<link rel="manifest" href="/moonbangoo/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/moonbangoo/icon-192.png">
   <script type="module" crossorigin src="/moonbangoo/assets/modulepreload-polyfill-P2Xu9kJm.js"></script>
-  <link rel="stylesheet" crossorigin href="/moonbangoo/assets/menu-CfheqtJ6.css">
+  <link rel="stylesheet" crossorigin href="/moonbangoo/assets/menu-NOm32cx8.css">
 </head>
 <body>
 <main class="game-menu" aria-labelledby="menu-title">
@@ -26,7 +27,7 @@
         <svg class="menu-arrow" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M5 16h21m-7-7 7 7-7 7"/></svg>
       </div>
     </a>
-    <a class="menu-option" href="https://prestige-kim.github.io/moonbangoo_PinBall/" aria-labelledby="pinball-title">
+    <a class="menu-option" href="./pinball/index.html" aria-labelledby="pinball-title">
       <div class="game-thumbnail pinball-thumbnail">
         <img src="/moonbangoo/assets/pinball-gameplay-MpVI5JEd.webp" alt="" width="1920" height="1080" decoding="async">
       </div>
@@ -35,7 +36,22 @@
         <svg class="menu-arrow" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M5 16h21m-7-7 7 7-7 7"/></svg>
       </div>
     </a>
+    <a class="menu-option" href="./coin.html" aria-labelledby="coin-title">
+      <div class="game-thumbnail coin-thumbnail">
+        <img src="/moonbangoo/assets/coin-flip-wic7xXPy.webp" alt="" width="960" height="640" decoding="async">
+      </div>
+      <div class="game-caption">
+        <span class="game-name" id="coin-title">코인 플립</span>
+        <svg class="menu-arrow" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M5 16h21m-7-7 7 7-7 7"/></svg>
+      </div>
+    </a>
   </nav>
 </main>
+<!-- 전체화면 (지원하는 브라우저에서만 fullscreen.js가 보이게 한다) -->
+<button id="fullscreen-toggle" class="fullscreen-toggle" type="button" aria-label="전체화면 켜기" aria-pressed="false" hidden>
+  <svg class="icon-enter" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+  <svg class="icon-exit" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg>
+</button>
+<script type="module" src="/moonbangoo/fullscreen.js"></script>
 </body>
 </html>
