@@ -269,7 +269,9 @@ const RARITY = {
   UR: { label: '최고등급', cls: 'r-ur' },
 };
 const RARITY_KEYS = Object.keys(RARITY);
-const DEFAULT_PACKS = [
+// 손님 게임은 켜진 팩 중 맨 앞의 팩 하나만 쓰고, 오리파 화면의 분류는 경품마다 고른 종류(icon)로 나눔
+const DEFAULT_PACK_NAME = '경품 팩';
+const PRIZE_KINDS = [
   { name: '베이커리 이용권', icon: 'bakery' },
   { name: '음료 이용권',     icon: 'drink' },
   { name: '카드 슬리브',     icon: 'sleeve' },
@@ -477,6 +479,8 @@ function setQuantity(prize, value) {
 
 /* ───────── 계산 ───────── */
 const sum = (list, key) => list.reduce((acc, item) => acc + item[key], 0);
+// 손님 게임이 쓰는 팩 (켜진 팩 중 맨 앞)
+const gamePack = () => state.packs.find(p => p.active);
 const prizesOf = packId => state.prizes.filter(p => p.packId === packId);
 const stockClass = p => (p.remaining === 0 ? 'out' : p.remaining <= LOW_STOCK ? 'low' : '');
 
@@ -637,10 +641,17 @@ function prizesView() {
     return view;
   }
 
-  const sellable = state.packs.filter(p => p.active && sum(prizesOf(p.id), 'remaining') > 0);
-  if (!sellable.length) {
+  const game = gamePack();
+  if (!game) {
     view.append(h('div', { class: 'banner banner-warn', role: 'alert' },
-      h('span', { text: '지금은 손님이 뽑을 수 있는 팩이 없어요. 모든 팩이 품절이거나 숨김 상태예요.' })));
+      h('span', { text: '지금은 손님 게임에 쓰는 팩이 없어요. 팩의 "손님에게 보임"을 켜 주세요.' })));
+  } else if (sum(prizesOf(game.id), 'remaining') === 0) {
+    view.append(h('div', { class: 'banner banner-warn', role: 'alert' },
+      h('span', { text: '지금은 손님이 뽑을 수 있는 경품이 없어요. 모든 경품이 품절이에요.' })));
+  }
+  if (state.packs.filter(p => p.active).length > 1) {
+    view.append(h('div', { class: 'banner banner-warn', role: 'alert' },
+      h('span', { text: `손님 게임은 켜진 팩 중 맨 앞의 '${game.name}' 팩 하나만 써요. 다른 팩의 경품은 게임에 나오지 않으니, 경품을 한 팩에 모으고 나머지 팩은 지우거나 "손님에게 보임"을 꺼 주세요.` })));
   }
 
   view.append(summaryCard());
@@ -650,7 +661,6 @@ function prizesView() {
   const filterBtn = (key, label) => h('button', { type: 'button', 'aria-pressed': String(state.filter === key), text: label, onclick: () => { state.filter = key; render(); } });
   view.append(h('div', { class: 'toolbar' },
     h('button', { class: 'btn btn-primary', type: 'button', onclick: () => openPrizeForm(), text: '＋ 경품 추가' }),
-    h('button', { class: 'btn', type: 'button', onclick: () => openPackForm(), text: '＋ 팩 추가' }),
     h('span', { class: 'grow' }),
     h('div', { class: 'seg', role: 'group', 'aria-label': '경품 보기' },
       filterBtn('all', '전체'), filterBtn('low', `부족 ${low}`), filterBtn('out', `품절 ${out}`))));
@@ -673,23 +683,19 @@ function prizesView() {
 
 function emptyPacksView() {
   return h('div', { class: 'card empty' },
-    h('h2', { text: '아직 만든 팩이 없어요' }),
-    h('p', { class: 'muted', style: 'margin:0', text: '손님이 먼저 고르는 카드팩이에요. 팩을 만든 뒤 그 안에 경품을 넣어 주세요.' }),
+    h('h2', { text: '아직 경품 팩이 없어요' }),
+    h('p', { class: 'muted', style: 'margin:0', text: '손님 게임은 팩 하나에 든 경품을 모두 보여 줘요. 팩을 하나 만든 뒤 그 안에 모든 경품을 넣어 주세요. 경품 종류(베이커리, 음료, 카드 등)는 경품마다 골라요.' }),
     h('div', { class: 'row' },
-      h('button', { class: 'btn btn-primary', type: 'button', onclick: e => createDefaultPacks(e.currentTarget), text: '기본 팩 7개 한 번에 만들기' }),
-      h('button', { class: 'btn', type: 'button', onclick: () => openPackForm(), text: '직접 만들기' })),
-    h('p', { class: 'muted small', style: 'margin:14px 0 0', text: '기본 팩: ' + DEFAULT_PACKS.map(p => p.name).join(', ') + ' (나중에 이름 바꾸기·지우기 가능)' }));
+      h('button', { class: 'btn btn-primary', type: 'button', onclick: e => createDefaultPack(e.currentTarget), text: '경품 팩 만들기' })),
+    h('p', { class: 'muted small', style: 'margin:14px 0 0', text: `'${DEFAULT_PACK_NAME}'이라는 이름으로 만들어져요. 이름은 나중에 팩 설정에서 바꿀 수 있어요.` }));
 }
 
-async function createDefaultPacks(button) {
+async function createDefaultPack(button) {
   button.disabled = true;
   button.textContent = '만드는 중…';
   try {
-    for (const pack of DEFAULT_PACKS) {
-      if (state.packs.some(p => p.name === pack.name)) continue;
-      await api('POST', '/pack', { name: pack.name, icon: pack.icon, active: true });
-    }
-    toast('기본 팩을 만들었어요. 이제 팩 안에 경품을 넣어 보세요.', 'ok');
+    await api('POST', '/pack', { name: DEFAULT_PACK_NAME, active: true });
+    toast('경품 팩을 만들었어요. 이제 경품을 넣어 보세요.', 'ok');
   } catch (e) {
     toast(e.message, 'error');
   }
@@ -719,6 +725,7 @@ function packCard(pack, list) {
 
   const badges = [];
   if (!pack.active) badges.push(h('span', { class: 'badge badge-hide', text: '손님에게 숨김' }));
+  else if (pack !== gamePack()) badges.push(h('span', { class: 'badge badge-low', text: '게임에 안 나옴' }));
   if (!all.length) badges.push(h('span', { class: 'badge badge-low', text: '경품 없음' }));
   else if (remaining === 0) badges.push(h('span', { class: 'badge badge-out', text: '품절' }));
 
@@ -895,7 +902,7 @@ function openPrizeForm({ prize = null, packId = null, keepRarity = null } = {}) 
 
   const error = h('p', { class: 'form-error', role: 'alert', hidden: true });
   const packSelect = h('select', { class: 'input', id: 'f-pack', value: String(initialPack) },
-    state.packs.map(p => h('option', { value: String(p.id), text: p.name + (p.active ? '' : ' (숨김)') })));
+    state.packs.map(p => h('option', { value: String(p.id), text: p.name + (!p.active ? ' (숨김)' : p === gamePack() ? ' (손님 게임에서 사용)' : ' (게임에 안 나옴)') })));
   const nameInput = h('input', { class: 'input', id: 'f-name', type: 'text', maxlength: '50', required: true, autocomplete: 'off', 'data-autofocus': '', value: prize?.name ?? '', placeholder: '예: 식빵 1개 이용권' });
   const rarityPick = h('div', { class: 'rarity-pick', role: 'radiogroup', 'aria-label': '등급' },
     RARITY_KEYS.map(key => h('label', {},
@@ -915,17 +922,19 @@ function openPrizeForm({ prize = null, packId = null, keepRarity = null } = {}) 
   const remainingInput = prize ? numInput('f-remaining', prize.remaining) : null;
   const descInput = h('textarea', { class: 'input', id: 'f-desc', maxlength: '500', value: prize?.description ?? '', placeholder: '카드에 보여 줄 설명' });
   const condInput = h('input', { class: 'input', id: 'f-cond', type: 'text', maxlength: '200', value: prize?.condition ?? '', placeholder: '예: 1만원 이상 구매 시 사용' });
-  // 카드에 표시할 경품 종류 (한 팩에 여러 종류를 섞어 넣어도 카드마다 종류가 나옴)
+  // 경품 종류, 오리파 화면의 종류별 남은 개수와 카드의 작은 그림이 이걸로 정해짐
   const iconSelect = h('select', { class: 'input', id: 'f-icon', value: prize?.icon ?? '' },
-    h('option', { value: '', text: '선택 안 함' }),
-    DEFAULT_PACKS.map(p => h('option', { value: p.icon, text: p.name })));
+    h('option', { value: '', text: '종류를 골라 주세요' }),
+    PRIZE_KINDS.map(p => h('option', { value: p.icon, text: p.name })));
 
   const body = h('form', { id: 'prize-form', novalidate: true, onsubmit: e => { e.preventDefault(); save(false); } },
     error,
-    h('div', { class: 'field' }, h('label', { for: 'f-pack', text: '어느 팩에 넣을까요?' }), packSelect),
+    state.packs.length > 1 ? h('div', { class: 'field' }, h('label', { for: 'f-pack', text: '어느 팩에 넣을까요?' }), packSelect,
+      h('div', { class: 'hint', text: '손님 게임에는 "손님 게임에서 사용" 팩의 경품만 나와요.' })) : null,
     h('div', { class: 'field' }, h('label', { for: 'f-name', text: '경품 이름' }), nameInput),
     h('div', { class: 'field' }, h('span', { class: 'label', text: '등급' }), rarityPick),
-    h('div', { class: 'field' }, h('label', { for: 'f-icon' }, '종류', h('span', { class: 'opt', text: '(선택)' })), iconSelect),
+    h('div', { class: 'field' }, h('label', { for: 'f-icon', text: '종류' }), iconSelect,
+      h('div', { class: 'hint', text: '손님 화면 아래의 종류별 남은 개수에 쓰여요.' })),
     editing
       ? h('div', { class: 'row2' },
           numField(remainingInput, '남은 수량', '지금 남아 있는 개수예요.'),
@@ -944,6 +953,7 @@ function openPrizeForm({ prize = null, packId = null, keepRarity = null } = {}) 
     const total = Number(totalInput.value);
     if (!name) { showError('경품 이름을 입력해 주세요.'); nameInput.focus(); return; }
     if (!rarity) { showError('등급을 선택해 주세요.'); return; }
+    if (!iconSelect.value) { showError('종류를 골라 주세요.'); iconSelect.focus(); return; }
     if (!Number.isInteger(total) || total < 0) { showError('수량은 0 이상의 숫자로 입력해 주세요.'); totalInput.focus(); return; }
     let remaining = null;
     if (editing) {
@@ -964,7 +974,7 @@ function openPrizeForm({ prize = null, packId = null, keepRarity = null } = {}) 
           packId: targetPack, name, rarity, total,
           ...(descInput.value.trim() && { description: descInput.value.trim() }),
           ...(condInput.value.trim() && { condition: condInput.value.trim() }),
-          ...(iconSelect.value && { icon: iconSelect.value }),
+          icon: iconSelect.value,
         });
         state.lastPackId = targetPack;
         state.lastRarity = rarity;
@@ -1019,19 +1029,15 @@ async function deletePrize(prize) {
 function openPackForm(pack = null) {
   const editing = !!pack;
   const error = h('p', { class: 'form-error', role: 'alert', hidden: true });
-  const nameInput = h('input', { class: 'input', id: 'p-name', type: 'text', maxlength: '50', required: true, autocomplete: 'off', 'data-autofocus': '', value: pack?.name ?? '', placeholder: '예: 베이커리 이용권' });
-  const iconInput = h('input', { class: 'input', id: 'p-icon', type: 'text', maxlength: '30', autocomplete: 'off', list: 'icon-list', value: pack?.icon ?? '', placeholder: '예: bakery' });
+  const nameInput = h('input', { class: 'input', id: 'p-name', type: 'text', maxlength: '50', required: true, autocomplete: 'off', 'data-autofocus': '', value: pack?.name ?? '', placeholder: `예: ${DEFAULT_PACK_NAME}` });
   const activeInput = h('input', { type: 'checkbox', checked: pack ? pack.active : true });
 
   const body = h('form', { id: 'pack-form', novalidate: true, onsubmit: e => { e.preventDefault(); save(); } },
     error,
     h('div', { class: 'field' }, h('label', { for: 'p-name', text: '팩 이름' }), nameInput,
-      h('div', { class: 'hint', text: '손님이 처음 고르는 카드팩 이름이에요.' })),
+      h('div', { class: 'hint', text: '관리할 때 쓰는 이름이에요. 손님 게임에는 이 팩에 든 경품이 모두 나와요.' })),
     h('div', { class: 'field' }, h('label', { class: 'check' }, activeInput, '손님에게 보이기'),
-      h('div', { class: 'hint', text: '끄면 손님 화면에서 이 팩이 사라져요. 준비 중일 때 꺼 두세요.' })),
-    h('div', { class: 'field' }, h('label', { for: 'p-icon' }, '아이콘 이름', h('span', { class: 'opt', text: '(선택)' })), iconInput,
-      h('datalist', { id: 'icon-list' }, DEFAULT_PACKS.map(p => h('option', { value: p.icon, text: p.name }))),
-      h('div', { class: 'hint', text: '카드 오른쪽 위 작은 그림을 정하는 이름이에요. 잘 모르면 비워 두세요.' })));
+      h('div', { class: 'hint', text: '끄면 손님 게임에서 이 팩의 경품이 사라져요. 준비 중일 때 꺼 두세요.' })));
 
   const showError = message => { error.textContent = message; error.hidden = false; error.scrollIntoView({ block: 'nearest' }); };
   const buttons = [];
@@ -1041,7 +1047,7 @@ function openPackForm(pack = null) {
     const name = nameInput.value.trim();
     if (!name) { showError('팩 이름을 입력해 주세요.'); nameInput.focus(); return; }
     buttons.forEach(b => { b.disabled = true; });
-    const payload = { name, icon: iconInput.value.trim(), active: activeInput.checked };
+    const payload = { name, active: activeInput.checked };
     try {
       if (editing) await api('PATCH', `/pack/${pack.id}`, payload);
       else await api('POST', '/pack', payload);
